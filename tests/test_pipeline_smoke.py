@@ -120,3 +120,66 @@ def test_shaders_then_postprocess(tmp_path, language):
     # Причина пропуска отрендерена на языке постобработки, а не на языке экспорта.
     expected = ("Blueprints are logic" if language == "en" else "Блюпринты")
     assert expected in report
+
+
+def _levels_manifest():
+    """Манифест экспорта с одним уровнем и одним экспортированным мешем."""
+    return {
+        "textures": [], "static_meshes": [
+            {"ue_path": "/Game/Maps/SM_Present", "file": "Meshes/Maps/SM_Present.fbx",
+             "material_slots": [], "lod_count": 1}],
+        "skeletal_meshes": [], "animations": [],
+        "materials": [], "material_graphs": [],
+        "levels": [{"uePath": "/Game/Maps/Level_A", "name": "Level_A",
+                    "file": "Levels/Maps/Level_A.json"}],
+        "skipped": [], "errors": [],
+    }
+
+
+def _level_file():
+    """Уровень ссылается на один экспортированный меш и один отсутствующий."""
+    return {
+        "schemaVersion": 1, "uePath": "/Game/Maps/Level_A", "name": "Level_A",
+        "actors": [{"id": "A1", "name": "Crate", "parentId": None}],
+        "objects": [
+            {"id": "A1.C0", "parentId": "A1", "mesh": "/Game/Maps/SM_Present",
+             "materialOverrides": [], "componentType": "StaticMeshComponent", "ismIndex": -1},
+            {"id": "A1.C1", "parentId": "A1", "mesh": "/Game/Maps/SM_Absent",
+             "materialOverrides": [], "componentType": "StaticMeshComponent", "ismIndex": -1},
+        ],
+        "lights": [{"id": "L1", "parentId": "A1", "unrealType": "PointLightComponent",
+                    "unityType": "Point", "notes": [
+                        {"reasonKey": "post.level.light_lumens", "reasonArgs": {}}]}],
+        "skipped": [{"actor": "/Game/Maps/Level_A.NiagaraActor", "component": "NiagaraComponent",
+                     "reason_key": "export.level.skip.niagara", "reason_args": {},
+                     "reason": "Niagara"}],
+    }
+
+
+def test_levels_carried_and_validated(tmp_path):
+    out_dir = str(tmp_path)
+    with io.open(os.path.join(out_dir, "manifest.json"), "w", encoding="utf-8") as fh:
+        json.dump(_levels_manifest(), fh, ensure_ascii=False)
+
+    level_dir = os.path.join(out_dir, "Levels", "Maps")
+    os.makedirs(level_dir)
+    with io.open(os.path.join(level_dir, "Level_A.json"), "w", encoding="utf-8") as fh:
+        json.dump(_level_file(), fh, ensure_ascii=False)
+
+    config_path = os.path.join(out_dir, "config.json")
+    with io.open(config_path, "w", encoding="utf-8") as fh:
+        json.dump(_config(out_dir, "en"), fh, ensure_ascii=False)
+
+    result = _run("postprocess.py", config_path)
+    assert result.returncode == 0, result.stdout + result.stderr
+
+    with io.open(os.path.join(out_dir, "unity_manifest.json"), encoding="utf-8") as fh:
+        unity = json.load(fh)
+    assert unity["levels"] == [{"uePath": "/Game/Maps/Level_A", "name": "Level_A",
+                                "file": "Levels/Maps/Level_A.json"}]
+
+    report = io.open(os.path.join(out_dir, "unsupported.md"), encoding="utf-8").read()
+    assert "Levels" in report
+    # Отсутствующий меш и заметка по свету доехали до отчёта.
+    assert "SM_Absent" in report
+    assert "lumens to candelas" in report or "not exported" in report

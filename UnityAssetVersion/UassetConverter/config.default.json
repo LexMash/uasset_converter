@@ -3,7 +3,7 @@
   "paths": {
     "ue_project": "",
     "ue_engine_dir": "",
-    "output_dir": "output",
+    "output_dir": "../../UassetConverterOutput",
     "python": ""
   },
   "pipeline": "urp",

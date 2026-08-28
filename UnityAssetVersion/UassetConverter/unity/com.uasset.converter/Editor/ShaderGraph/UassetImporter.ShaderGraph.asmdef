@@ -1,0 +1,25 @@
+{
+    "name": "UassetImporter.ShaderGraph",
+    "rootNamespace": "UassetImporter.ShaderGraphExport",
+    "references": [
+        "UassetImporter.Editor",
+        "Unity.ShaderGraph.Editor",
+        "Unity.RenderPipelines.Core.Editor",
+        "Unity.RenderPipelines.Core.Runtime"
+    ],
+    "includePlatforms": ["Editor"],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": ["UASSET_HAS_SHADERGRAPH", "UASSET_SHADERGRAPH_BACKEND"],
+    "versionDefines": [
+        {
+            "name": "com.unity.shadergraph",
+            "expression": "12.0",
+            "define": "UASSET_HAS_SHADERGRAPH"
+        }
+    ],
+    "noEngineReferences": false
+}

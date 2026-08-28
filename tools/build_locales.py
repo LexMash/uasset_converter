@@ -42,6 +42,11 @@ STRINGS = {
     "cli.step_missing": (
         "skipping {module} — the file does not exist yet",
         "пропускаю {module} — файла ещё нет"),
+    "cli.error.required_assets": (
+        "the 'levels' scope needs these asset types, but they are disabled: {types}. "
+        "Enable them, or pass --allow-required-assets to run anyway.",
+        "режиму «уровни» нужны эти типы ассетов, но они выключены: {types}. "
+        "Включи их или добавь --allow-required-assets, чтобы запустить всё равно."),
 
     # -- GUI: каркас ---------------------------------------------------------
     "gui.title": (
@@ -80,6 +85,9 @@ STRINGS = {
     "gui.scope.test": ("Test subset", "Тестовая выборка"),
     "gui.scope.selected": ("Selected folders", "Выбранные папки"),
     "gui.scope.all": ("Entire Content", "Весь Content"),
+    "gui.scope.levels": ("Levels → Scenes", "Уровни → Сцены"),
+
+    "gui.option.light_multiplier": ("Light intensity ×", "Множитель яркости света ×"),
 
     "gui.shader_output.hlsl": ("HLSL shader file", "Готовый HLSL-шейдер"),
     "gui.shader_output.shadergraph": ("Shader Graph", "Shader Graph"),
@@ -93,6 +101,14 @@ STRINGS = {
     "gui.folders.none_selected": (
         "nothing selected — include_paths from the config will be used",
         "ничего не выбрано — будет использован include_paths из конфига"),
+
+    # -- GUI: уровни ---------------------------------------------------------
+    "gui.box.levels": ("Levels for the “Levels → Scenes” scope",
+                       "Уровни для режима «Уровни → Сцены»"),
+    "gui.levels.reload": ("Refresh levels", "Обновить уровни"),
+    "gui.levels.selected": ("levels selected: {count}", "выбрано уровней: {count}"),
+    "gui.levels.none_selected": ("no levels selected", "уровни не выбраны"),
+    "gui.levels.no_content": ("no Content folder found", "папка Content не найдена"),
 
     # -- GUI: действия -------------------------------------------------------
     "gui.action.scan": ("Scan", "Сканировать"),
@@ -168,6 +184,38 @@ STRINGS = {
     "export.done": ("DONE. Manifest: {path}", "ГОТОВО. Манифест: {path}"),
     "export.error_on": ("ERROR on {path}: {error}", "ОШИБКА на {path}: {error}"),
 
+    # -- Экспорт уровней -----------------------------------------------------
+    "export.level_subset": (
+        "levels: {levels}, assets to export with dependencies: {count}",
+        "уровней: {levels}, ассетов к экспорту с зависимостями: {count}"),
+    "export.level_collected": (
+        "level {name}: {objects} objects, {lights} lights",
+        "уровень {name}: {objects} объектов, {lights} источников света"),
+    "export.level.skip.load_failed": (
+        "the level could not be loaded",
+        "уровень не удалось загрузить"),
+    "export.level.skip.niagara": (
+        "Niagara component — particle systems are not converted",
+        "Компонент Niagara — системы частиц не конвертируются"),
+    "export.level.skip.particles": (
+        "cascade particle component — particle systems are not converted",
+        "каскадный компонент частиц — системы частиц не конвертируются"),
+    "export.level.skip.camera": (
+        "camera component — cameras are not transferred to the scene",
+        "компонент камеры — камеры в сцену не переносятся"),
+    "export.level.skip.skylight": (
+        "sky light — no direct counterpart, set up ambient lighting in Unity",
+        "SkyLight — прямого аналога нет, окружающий свет настраивается в Unity"),
+    "export.level.skip.audio": (
+        "audio component — sound is out of scope",
+        "аудиокомпонент — звук не входит в задачу"),
+    "export.level.skip.landscape": (
+        "landscape component — terrain is not converted",
+        "компонент Landscape — ландшафт не конвертируется"),
+    "export.level.skip.decal": (
+        "decal component — decals are a separate mechanic in Unity",
+        "компонент декали — декали в Unity отдельная механика"),
+
     # -- Экспорт: причины пропуска ------------------------------------------
     "export.skip.texture_exporter": (
         "the texture exporter produced no file (format {format})",
@@ -224,6 +272,7 @@ STRINGS = {
     "summary.materials": ("materials", "материалы"),
     "summary.material_graphs": ("material graphs", "графы материалов"),
     "summary.material_functions": ("material functions", "функции материалов"),
+    "summary.levels": ("levels", "уровни"),
     "summary.skipped": ("skipped", "пропущено"),
     "summary.errors": ("errors", "ошибки"),
 
@@ -288,6 +337,8 @@ STRINGS = {
     "post.summary.materials": (
         "materials:          {count} ({shader} on their own shader, {fallback} on Lit)",
         "материалов:         {count} ({shader} на своём шейдере, {fallback} на Lit)"),
+    "post.summary.levels": ("levels:             {count}",
+                            "уровней:            {count}"),
     "post.summary.manifest": ("manifest for Unity: {path}",
                               "манифест для Unity: {path}"),
     "post.summary.report": ("report:             {path}",
@@ -321,11 +372,33 @@ STRINGS = {
         "Unreal parameters with no input in the URP lighting models, values dropped: {names}",
         "параметры Unreal без входа в URP-модели освещения, значения отброшены: {names}"),
 
+    # -- Постобработка: уровни ----------------------------------------------
+    "post.level.file_missing": (
+        "the level file {file} is listed in the manifest but not found on disk",
+        "файл уровня {file} указан в манифесте, но не найден на диске"),
+    "post.level.missing_ref": (
+        "references a {kind} that was not exported: {path}",
+        "ссылается на {kind}, который не экспортирован: {path}"),
+    "post.level.skipped_component": (
+        "component {component} was not transferred — {reason}",
+        "компонент {component} не перенесён — {reason}"),
+    "post.level.light_note": ("light: {note}", "свет: {note}"),
+    "post.level.light_no_intensity": (
+        "the light has no intensity value, brightness left at zero",
+        "у источника нет значения интенсивности, яркость оставлена нулевой"),
+    "post.level.light_lumens": (
+        "intensity converted from lumens to candelas approximately",
+        "интенсивность приблизительно пересчитана из люменов в канделы"),
+    "post.level.light_unit_unknown": (
+        "the intensity unit is not recognised, the raw number was kept",
+        "единица интенсивности не распознана, взято исходное число"),
+
     # -- Отчёт unsupported.md ------------------------------------------------
     "section.textures": ("Textures", "Текстуры"),
     "section.materials": ("Materials", "Материалы"),
     "section.animations": ("Animations", "Анимации"),
     "section.shaders": ("Shaders", "Шейдеры"),
+    "section.levels": ("Levels", "Уровни"),
 
     "report.title": ("What did not transfer automatically",
                      "Что не перенеслось автоматически"),

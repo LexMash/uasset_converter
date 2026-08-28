@@ -1,0 +1,1130 @@
+{
+  "code": "ru",
+  "name": "Русский",
+  "fallback": "en",
+  "authors": [
+    "Uasset Converter"
+  ],
+  "entries": [
+    {
+      "k": "cli.error.no_editor_cmd",
+      "v": "нет UnrealEditor-Cmd.exe по пути {path}"
+    },
+    {
+      "k": "cli.error.no_engine",
+      "v": "не нашёл установленный Unreal Engine — укажи путь в конфиге"
+    },
+    {
+      "k": "cli.error.no_uproject",
+      "v": "нет .uproject по пути {path}"
+    },
+    {
+      "k": "cli.launching_unreal",
+      "v": "Запускаю Unreal: {editor}"
+    },
+    {
+      "k": "cli.step_missing",
+      "v": "пропускаю {module} — файла ещё нет"
+    },
+    {
+      "k": "cli.stopped_by_user",
+      "v": "Прервано пользователем."
+    },
+    {
+      "k": "cli.unreal_exit",
+      "v": "Unreal завершился с кодом {code}. Полный лог: logs/ue_export.log"
+    },
+    {
+      "k": "export.done",
+      "v": "ГОТОВО. Манифест: {path}"
+    },
+    {
+      "k": "export.error_on",
+      "v": "ОШИБКА на {path}: {error}"
+    },
+    {
+      "k": "export.queued",
+      "v": "к обработке: {count} ассетов (режим scope={mode})"
+    },
+    {
+      "k": "export.scanning_registry",
+      "v": "сканирую Asset Registry..."
+    },
+    {
+      "k": "export.skip.anim_blueprint",
+      "v": "Anim Blueprint — логика анимаций, переписывается вручную"
+    },
+    {
+      "k": "export.skip.anim_exporter",
+      "v": "AnimSequenceExporterFBX не выдал файл"
+    },
+    {
+      "k": "export.skip.blueprint",
+      "v": "Блюпринты — это логика, а не арт; в Unity переписываются вручную"
+    },
+    {
+      "k": "export.skip.configured",
+      "v": "исключён из транспиляции в конфиге"
+    },
+    {
+      "k": "export.skip.configured_reason",
+      "v": "{reason}"
+    },
+    {
+      "k": "export.skip.function_unreadable",
+      "v": "не удалось прочитать выражения этой функции материала — вызовы останутся приблизительными"
+    },
+    {
+      "k": "export.skip.niagara_emitter",
+      "v": "Эмиттер Niagara — часть системы частиц, отдельно бесполезен"
+    },
+    {
+      "k": "export.skip.niagara_system",
+      "v": "Системы частиц Niagara не имеют автоматического аналога в Unity"
+    },
+    {
+      "k": "export.skip.no_source_art",
+      "v": "source art вырезан — экспорт из платформенных данных, качество ниже оригинала"
+    },
+    {
+      "k": "export.skip.physics_asset",
+      "v": "Физические тела UE не имеют прямого аналога; коллайдеры настраиваются в Unity"
+    },
+    {
+      "k": "export.skip.skeletal_mesh_exporter",
+      "v": "SkeletalMeshExporterFBX не выдал файл"
+    },
+    {
+      "k": "export.skip.skeleton",
+      "v": "Скелет переносится внутри FBX скелетного меша, отдельным файлом не нужен"
+    },
+    {
+      "k": "export.skip.sound",
+      "v": "Звук не входит в задачу конвертации арта"
+    },
+    {
+      "k": "export.skip.static_mesh_exporter",
+      "v": "StaticMeshExporterFBX не выдал файл"
+    },
+    {
+      "k": "export.skip.texture_exporter",
+      "v": "экспортёр текстуры не выдал файл (формат {format})"
+    },
+    {
+      "k": "export.skip.unknown_class",
+      "v": "класс {cls} не поддерживается конвертером"
+    },
+    {
+      "k": "export.skip.world",
+      "v": "Уровни не конвертируются; переносится только арт, из которого они собраны"
+    },
+    {
+      "k": "export.test_subset",
+      "v": "тестовая выборка с зависимостями: {count} ассетов"
+    },
+    {
+      "k": "gui.action.all",
+      "v": "Всё целиком"
+    },
+    {
+      "k": "gui.action.export",
+      "v": "Экспорт из Unreal"
+    },
+    {
+      "k": "gui.action.install_package",
+      "v": "Пакет в Unity…"
+    },
+    {
+      "k": "gui.action.open_output",
+      "v": "Открыть output"
+    },
+    {
+      "k": "gui.action.postprocess",
+      "v": "Постобработка"
+    },
+    {
+      "k": "gui.action.scan",
+      "v": "Сканировать"
+    },
+    {
+      "k": "gui.action.shaders",
+      "v": "Сгенерировать шейдеры"
+    },
+    {
+      "k": "gui.action.stop",
+      "v": "Отмена"
+    },
+    {
+      "k": "gui.box.export",
+      "v": "Что экспортировать"
+    },
+    {
+      "k": "gui.box.folders",
+      "v": "Папки для режима «Выбранные папки»"
+    },
+    {
+      "k": "gui.box.log",
+      "v": "Ход работы"
+    },
+    {
+      "k": "gui.box.options",
+      "v": "Настройки"
+    },
+    {
+      "k": "gui.box.paths",
+      "v": "Пути"
+    },
+    {
+      "k": "gui.browse",
+      "v": "Обзор…"
+    },
+    {
+      "k": "gui.error.prefix",
+      "v": "ОШИБКА: {error}"
+    },
+    {
+      "k": "gui.export.animations",
+      "v": "Анимации"
+    },
+    {
+      "k": "gui.export.material_graphs",
+      "v": "Графы мастеров (для шейдеров)"
+    },
+    {
+      "k": "gui.export.materials",
+      "v": "Материалы"
+    },
+    {
+      "k": "gui.export.skeletal_meshes",
+      "v": "Скелетные меши"
+    },
+    {
+      "k": "gui.export.static_meshes",
+      "v": "Статик-меши"
+    },
+    {
+      "k": "gui.export.textures",
+      "v": "Текстуры"
+    },
+    {
+      "k": "gui.folders.clear",
+      "v": "Снять все"
+    },
+    {
+      "k": "gui.folders.no_content",
+      "v": "папка Content не найдена"
+    },
+    {
+      "k": "gui.folders.none_selected",
+      "v": "ничего не выбрано — будет использован include_paths из конфига"
+    },
+    {
+      "k": "gui.folders.reload",
+      "v": "Обновить список"
+    },
+    {
+      "k": "gui.folders.selected",
+      "v": "выбрано: {count}"
+    },
+    {
+      "k": "gui.install.done_body",
+      "v": "Пакет прописан. Unity подхватит его при следующем переключении в редактор.\n\nВ Unity: меню Tools → Uasset Converter."
+    },
+    {
+      "k": "gui.install.done_title",
+      "v": "Готово"
+    },
+    {
+      "k": "gui.install.failed_body",
+      "v": "{error}"
+    },
+    {
+      "k": "gui.install.failed_title",
+      "v": "Не удалось прописать пакет"
+    },
+    {
+      "k": "gui.install.no_package_body",
+      "v": "Нет package.json по пути {path}"
+    },
+    {
+      "k": "gui.install.no_package_title",
+      "v": "Пакет не найден"
+    },
+    {
+      "k": "gui.install.not_unity_body",
+      "v": "В выбранной папке нет Packages/manifest.json"
+    },
+    {
+      "k": "gui.install.not_unity_title",
+      "v": "Это не проект Unity"
+    },
+    {
+      "k": "gui.install.registered",
+      "v": "Пакет прописан в {path}"
+    },
+    {
+      "k": "gui.install.replaced",
+      "v": "Прежняя ссылка заменена: {previous}"
+    },
+    {
+      "k": "gui.option.avatar",
+      "v": "Аватар для скелеток:"
+    },
+    {
+      "k": "gui.option.flip_normal",
+      "v": "Переворачивать зелёный канал нормалей"
+    },
+    {
+      "k": "gui.option.language",
+      "v": "Язык:"
+    },
+    {
+      "k": "gui.option.pipeline",
+      "v": "Рендер-пайплайн Unity:"
+    },
+    {
+      "k": "gui.option.scope",
+      "v": "Объём конвертации:"
+    },
+    {
+      "k": "gui.option.shader_output",
+      "v": "Формат шейдеров:"
+    },
+    {
+      "k": "gui.path.engine",
+      "v": "Папка движка"
+    },
+    {
+      "k": "gui.path.output",
+      "v": "Папка вывода"
+    },
+    {
+      "k": "gui.path.project",
+      "v": "Проект Unreal (.uproject)"
+    },
+    {
+      "k": "gui.pick.engine",
+      "v": "Папка установленного Unreal Engine"
+    },
+    {
+      "k": "gui.pick.output",
+      "v": "Куда складывать результат"
+    },
+    {
+      "k": "gui.pick.project",
+      "v": "Выбери .uproject"
+    },
+    {
+      "k": "gui.pick.project_filter",
+      "v": "Проект Unreal"
+    },
+    {
+      "k": "gui.pick.unity_project",
+      "v": "Папка Unity-проекта (та, где лежит Assets)"
+    },
+    {
+      "k": "gui.progress.of",
+      "v": "{done} из {total} — {label}"
+    },
+    {
+      "k": "gui.scan.content",
+      "v": "Content: {path}"
+    },
+    {
+      "k": "gui.scan.header",
+      "v": "— Разведка по файлам —"
+    },
+    {
+      "k": "gui.scan.hint",
+      "v": "Точные типы ассетов посчитает шаг «Экспорт из Unreal»."
+    },
+    {
+      "k": "gui.scan.no_extension",
+      "v": "(без расширения)"
+    },
+    {
+      "k": "gui.scan.not_found_body",
+      "v": "Нет папки Content рядом с .uproject"
+    },
+    {
+      "k": "gui.scan.not_found_title",
+      "v": "Не найдено"
+    },
+    {
+      "k": "gui.scan.total_gb",
+      "v": "  всего {size} ГБ"
+    },
+    {
+      "k": "gui.scope.all",
+      "v": "Весь Content"
+    },
+    {
+      "k": "gui.scope.selected",
+      "v": "Выбранные папки"
+    },
+    {
+      "k": "gui.scope.test",
+      "v": "Тестовая выборка"
+    },
+    {
+      "k": "gui.shader_output.both",
+      "v": "Оба формата"
+    },
+    {
+      "k": "gui.shader_output.hlsl",
+      "v": "Готовый HLSL-шейдер"
+    },
+    {
+      "k": "gui.shader_output.shadergraph",
+      "v": "Shader Graph"
+    },
+    {
+      "k": "gui.status.aborted",
+      "v": "Прервано из-за ошибки"
+    },
+    {
+      "k": "gui.status.ready",
+      "v": "Готов к работе"
+    },
+    {
+      "k": "gui.status.step_done",
+      "v": "Шаг «{step}» завершён"
+    },
+    {
+      "k": "gui.status.step_failed",
+      "v": "Шаг «{step}» завершился с кодом {code}"
+    },
+    {
+      "k": "gui.status.stopped",
+      "v": "Остановлено пользователем"
+    },
+    {
+      "k": "gui.status.stopping",
+      "v": "Останавливаю…"
+    },
+    {
+      "k": "gui.status.working",
+      "v": "Работаю…"
+    },
+    {
+      "k": "gui.title",
+      "v": "Конвертер ассетов Unreal → Unity"
+    },
+    {
+      "k": "post.done",
+      "v": "Готово."
+    },
+    {
+      "k": "post.loop.matched_loop",
+      "v": "имя совпало с шаблоном цикла {pattern}"
+    },
+    {
+      "k": "post.loop.matched_noloop",
+      "v": "имя совпало с шаблоном не-цикла {pattern}"
+    },
+    {
+      "k": "post.loop.no_match",
+      "v": "шаблоны не сработали — поставлен цикл выключен"
+    },
+    {
+      "k": "post.no_manifest",
+      "v": "нет {path} — сначала выполни шаг export"
+    },
+    {
+      "k": "post.note.dropped_parameters",
+      "v": "параметры Unreal без входа в URP-модели освещения, значения отброшены: {names}"
+    },
+    {
+      "k": "post.note.loop_guess",
+      "v": "зацикливание определено эвристикой ({why}) — проверь в Unity"
+    },
+    {
+      "k": "post.note.no_master",
+      "v": "не найден мастер-материал в цепочке — значения взяты только из переопределений инстанса"
+    },
+    {
+      "k": "post.note.no_source_art",
+      "v": "source art вырезан из ассета — экспорт сделан из платформенных данных, качество ниже оригинала"
+    },
+    {
+      "k": "post.note.procedural_master",
+      "v": "мастер {master} строит поверхность процедурно (текстуры используются внутри графа, а не через параметры) — в Unity материал станет плоским цветом"
+    },
+    {
+      "k": "post.note.unmatched_parameters",
+      "v": "параметры без соответствия в шейдере: {names}"
+    },
+    {
+      "k": "post.summary.animations",
+      "v": "анимаций:           {count}"
+    },
+    {
+      "k": "post.summary.manifest",
+      "v": "манифест для Unity: {path}"
+    },
+    {
+      "k": "post.summary.materials",
+      "v": "материалов:         {count} ({shader} на своём шейдере, {fallback} на Lit)"
+    },
+    {
+      "k": "post.summary.report",
+      "v": "отчёт:              {path}"
+    },
+    {
+      "k": "post.summary.skeletal_meshes",
+      "v": "скелетных мешей:    {count}"
+    },
+    {
+      "k": "post.summary.static_meshes",
+      "v": "статик-мешей:       {count}"
+    },
+    {
+      "k": "post.summary.textures",
+      "v": "текстур:            {count} (+{generated} сгенерировано)"
+    },
+    {
+      "k": "report.and_more",
+      "v": "…и ещё {count}"
+    },
+    {
+      "k": "report.column.category",
+      "v": "Категория"
+    },
+    {
+      "k": "report.column.count",
+      "v": "Штук"
+    },
+    {
+      "k": "report.count_of",
+      "v": "{count} шт."
+    },
+    {
+      "k": "report.export_errors",
+      "v": "Ошибки экспорта"
+    },
+    {
+      "k": "report.inexact_shaders",
+      "v": "Шейдеры с неточной транспиляцией"
+    },
+    {
+      "k": "report.needs_check",
+      "v": "{section} — требует проверки"
+    },
+    {
+      "k": "report.regenerated",
+      "v": "Отчёт собирается заново при каждом запуске постобработки."
+    },
+    {
+      "k": "report.row.animations",
+      "v": "Анимаций"
+    },
+    {
+      "k": "report.row.export_errors",
+      "v": "Ошибок при экспорте"
+    },
+    {
+      "k": "report.row.materials_fallback",
+      "v": "Материалов на дефолтном Lit"
+    },
+    {
+      "k": "report.row.materials_shader",
+      "v": "Материалов на транспилированном шейдере"
+    },
+    {
+      "k": "report.row.skeletal_meshes",
+      "v": "Скелетных мешей"
+    },
+    {
+      "k": "report.row.static_meshes",
+      "v": "Статик-мешей"
+    },
+    {
+      "k": "report.row.textures_exported",
+      "v": "Текстур экспортировано"
+    },
+    {
+      "k": "report.row.textures_generated",
+      "v": "Текстур сгенерировано (маски, нормали)"
+    },
+    {
+      "k": "report.skipped",
+      "v": "Пропущенные ассеты"
+    },
+    {
+      "k": "report.summary",
+      "v": "Сводка"
+    },
+    {
+      "k": "report.title",
+      "v": "Что не перенеслось автоматически"
+    },
+    {
+      "k": "report.todo_line",
+      "v": "нода `{type}` #{index} — {message}"
+    },
+    {
+      "k": "section.animations",
+      "v": "Анимации"
+    },
+    {
+      "k": "section.materials",
+      "v": "Материалы"
+    },
+    {
+      "k": "section.shaders",
+      "v": "Шейдеры"
+    },
+    {
+      "k": "section.textures",
+      "v": "Текстуры"
+    },
+    {
+      "k": "shader.comment.generated",
+      "v": "Сгенерировано конвертером Unreal -> Unity. Правки будут затёрты при пересборке."
+    },
+    {
+      "k": "shader.comment.nodes",
+      "v": "Мастер-материал Unreal, нод в графе: {count}"
+    },
+    {
+      "k": "shader.comment.smoothness",
+      "v": "Unreal хранит roughness, Unity ждёт smoothness — это инверсия."
+    },
+    {
+      "k": "shader.comment.source",
+      "v": "Источник: {path}"
+    },
+    {
+      "k": "shader.done",
+      "v": "Готово: {written} шейдеров записано, {reused} переиспользовано, TODO: {todos}"
+    },
+    {
+      "k": "shader.hdrp_needs_shadergraph",
+      "v": "Выбран HDRP: рукописный Lit-шейдер этим пайплайном не поддерживается, поэтому пишется только вывод для Shader Graph. Импортируй его из окна в Unity."
+    },
+    {
+      "k": "shader.header_todo",
+      "v": "ВНИМАНИЕ: {count} нод(ы) не перенесены точно — подробности в unsupported.md"
+    },
+    {
+      "k": "shader.helpers_header",
+      "v": "Перенесённые функции материалов Unreal"
+    },
+    {
+      "k": "shader.index",
+      "v": "Индекс: {path}"
+    },
+    {
+      "k": "shader.no_graphs",
+      "v": "в манифесте нет графов мастер-материалов — транспилировать нечего"
+    },
+    {
+      "k": "shader.no_unity_equivalent",
+      "v": "(без аналога в Unity: {names})"
+    },
+    {
+      "k": "shader.node_and_property_count",
+      "v": "{nodes} нод, {properties} свойств"
+    },
+    {
+      "k": "shader.reused",
+      "v": "{shader} (тот же граф, шейдер переиспользован)"
+    },
+    {
+      "k": "shader.todo.function_not_ported",
+      "v": "функция материала {path} не перенесена"
+    },
+    {
+      "k": "shader.todo.unsupported_no_inputs",
+      "v": "нода не поддерживается и не имеет входов — подставлен 0"
+    },
+    {
+      "k": "shader.todo.unsupported_passthrough",
+      "v": "нода не поддерживается, вход {input} проброшен как есть"
+    },
+    {
+      "k": "shader.todo.uv_set_clamped",
+      "v": "UV-набор {requested} не передаётся в шейдер, взят UV{used}"
+    },
+    {
+      "k": "shader.todo_count",
+      "v": "{count} TODO"
+    },
+    {
+      "k": "shader.unnamed",
+      "v": "<без имени>"
+    },
+    {
+      "k": "summary.animations",
+      "v": "анимации"
+    },
+    {
+      "k": "summary.errors",
+      "v": "ошибки"
+    },
+    {
+      "k": "summary.material_functions",
+      "v": "функции материалов"
+    },
+    {
+      "k": "summary.material_graphs",
+      "v": "графы материалов"
+    },
+    {
+      "k": "summary.materials",
+      "v": "материалы"
+    },
+    {
+      "k": "summary.skeletal_meshes",
+      "v": "скелетные меши"
+    },
+    {
+      "k": "summary.skipped",
+      "v": "пропущено"
+    },
+    {
+      "k": "summary.static_meshes",
+      "v": "статик-меши"
+    },
+    {
+      "k": "summary.textures",
+      "v": "текстуры"
+    },
+    {
+      "k": "unity.browse",
+      "v": "Обзор…"
+    },
+    {
+      "k": "unity.clip.no_avatar",
+      "v": "в модели {model} не оказалось аватара для клипа {clip}"
+    },
+    {
+      "k": "unity.clip.no_importer",
+      "v": "нет импортёра для клипа {path}"
+    },
+    {
+      "k": "unity.clip.no_matching_skeleton",
+      "v": "для клипа {clip} не найден скелетный меш с тем же скелетом — клип импортирован как отдельный Generic-риг, привязку придётся задать вручную"
+    },
+    {
+      "k": "unity.convert.cancel",
+      "v": "Отмена"
+    },
+    {
+      "k": "unity.convert.cancelled",
+      "v": "Отменено"
+    },
+    {
+      "k": "unity.convert.config_failed",
+      "v": "Не удалось прочитать настройки: {error}"
+    },
+    {
+      "k": "unity.convert.config_saved",
+      "v": "Настройки сохранены в config.json"
+    },
+    {
+      "k": "unity.convert.convert_and_import",
+      "v": "Конвертировать и импортировать"
+    },
+    {
+      "k": "unity.convert.converter_dir",
+      "v": "Папка конвертера"
+    },
+    {
+      "k": "unity.convert.deps_missing",
+      "v": "Python есть, но не хватает пакетов: {packages}. Выполни:\n{command}"
+    },
+    {
+      "k": "unity.convert.deps_ok",
+      "v": "Python и пакеты на месте"
+    },
+    {
+      "k": "unity.convert.failed",
+      "v": "Шаг {step} завершился с кодом {code}"
+    },
+    {
+      "k": "unity.convert.finished",
+      "v": "Шаг {step} завершён"
+    },
+    {
+      "k": "unity.convert.folders_hint",
+      "v": "Папки нужны только для режима «Выбранные папки»."
+    },
+    {
+      "k": "unity.convert.header",
+      "v": "Конвертация ассетов прямо из проекта Unreal"
+    },
+    {
+      "k": "unity.convert.import_only",
+      "v": "Только импорт"
+    },
+    {
+      "k": "unity.convert.no_converter",
+      "v": "В этой папке нет convert.py. Укажи папку, куда распакован конвертер."
+    },
+    {
+      "k": "unity.convert.no_output_yet",
+      "v": "Конвертер ещё не создал unity_manifest.json — запусти конвертацию."
+    },
+    {
+      "k": "unity.convert.pick_converter",
+      "v": "Папка с convert.py"
+    },
+    {
+      "k": "unity.convert.python",
+      "v": "Python"
+    },
+    {
+      "k": "unity.convert.python_autodetect",
+      "v": "Найти"
+    },
+    {
+      "k": "unity.convert.python_found",
+      "v": "Python найден: {path}"
+    },
+    {
+      "k": "unity.convert.python_not_found",
+      "v": "Python 3 не найден. Установи его с python.org и нажми «Найти» ещё раз или впиши путь к python.exe вручную."
+    },
+    {
+      "k": "unity.convert.refresh_folders",
+      "v": "Обновить список папок"
+    },
+    {
+      "k": "unity.convert.reload_config",
+      "v": "Перечитать настройки"
+    },
+    {
+      "k": "unity.convert.running",
+      "v": "Выполняется: {step}"
+    },
+    {
+      "k": "unity.convert.section_folders",
+      "v": "Папки"
+    },
+    {
+      "k": "unity.convert.section_paths",
+      "v": "Пути"
+    },
+    {
+      "k": "unity.convert.section_run",
+      "v": "Запуск"
+    },
+    {
+      "k": "unity.convert.section_what",
+      "v": "Что конвертировать"
+    },
+    {
+      "k": "unity.convert.shadergraph_none",
+      "v": "В output нет graph_ir.json — конвертер не сгенерировал IR. Поставь формат шейдеров Shader Graph или «Оба» и перезапусти шаг шейдеров."
+    },
+    {
+      "k": "unity.convert.shadergraph_written",
+      "v": "Файлов Shader Graph записано: {count}"
+    },
+    {
+      "k": "unity.convert.starting_import",
+      "v": "Конвертация закончена, запускаю импорт"
+    },
+    {
+      "k": "unity.convert.step_all",
+      "v": "Всё целиком"
+    },
+    {
+      "k": "unity.convert.step_export",
+      "v": "Экспорт из Unreal"
+    },
+    {
+      "k": "unity.convert.step_postprocess",
+      "v": "Постобработка"
+    },
+    {
+      "k": "unity.convert.step_shaders",
+      "v": "Шейдеры"
+    },
+    {
+      "k": "unity.convert.window_title",
+      "v": "Конвертер Uasset"
+    },
+    {
+      "k": "unity.import.aborted",
+      "v": "импорт прерван: {error}"
+    },
+    {
+      "k": "unity.import.avatar",
+      "v": "Аватар скелеток"
+    },
+    {
+      "k": "unity.import.clips_done",
+      "v": "настроено клипов: {count}"
+    },
+    {
+      "k": "unity.import.copied",
+      "v": "скопировано файлов: {count}"
+    },
+    {
+      "k": "unity.import.finished",
+      "v": "готово"
+    },
+    {
+      "k": "unity.import.header",
+      "v": "Импорт ассетов, сконвертированных из Unreal"
+    },
+    {
+      "k": "unity.import.manifest_read",
+      "v": "манифест прочитан: {textures} текстур, {meshes} мешей, {skeletal} скелеток, {clips} клипов, {materials} материалов"
+    },
+    {
+      "k": "unity.import.manifest_unreadable",
+      "v": "не удалось прочитать манифест: {error}"
+    },
+    {
+      "k": "unity.import.materials_done",
+      "v": "материалов создано: {count} (на своём шейдере {shader}, на дефолтном Lit {fallback}, не вышло {failed})"
+    },
+    {
+      "k": "unity.import.meshes_done",
+      "v": "настроено статик-мешей: {count}"
+    },
+    {
+      "k": "unity.import.no_manifest",
+      "v": "В указанной папке нет unity_manifest.json.\nСначала выполни в конвертере шаги «Экспорт из Unreal» и «Постобработка»."
+    },
+    {
+      "k": "unity.import.output_dir",
+      "v": "Папка output"
+    },
+    {
+      "k": "unity.import.overwrite",
+      "v": "Перезаписывать файлы"
+    },
+    {
+      "k": "unity.import.pick_output",
+      "v": "Папка output конвертера"
+    },
+    {
+      "k": "unity.import.run",
+      "v": "Импортировать"
+    },
+    {
+      "k": "unity.import.skeletal_done",
+      "v": "настроено скелетных мешей: {count}"
+    },
+    {
+      "k": "unity.import.source_missing",
+      "v": "нет исходного файла: {path}"
+    },
+    {
+      "k": "unity.import.step_animations",
+      "v": "Анимации…"
+    },
+    {
+      "k": "unity.import.step_materials",
+      "v": "Создание материалов…"
+    },
+    {
+      "k": "unity.import.step_models",
+      "v": "Модели…"
+    },
+    {
+      "k": "unity.import.step_textures",
+      "v": "Настройка текстур…"
+    },
+    {
+      "k": "unity.import.target_root",
+      "v": "Куда в проекте"
+    },
+    {
+      "k": "unity.import.textures_done",
+      "v": "настроено текстур: {count}"
+    },
+    {
+      "k": "unity.import.window_title",
+      "v": "Импорт Uasset"
+    },
+    {
+      "k": "unity.language",
+      "v": "Язык"
+    },
+    {
+      "k": "unity.log",
+      "v": "Лог"
+    },
+    {
+      "k": "unity.material.no_shader_at_all",
+      "v": "не найден ни шейдер {shader}, ни запасной {fallback} — пропускаю {path}"
+    },
+    {
+      "k": "unity.material.shader_missing",
+      "v": "шейдер {shader} не найден, {name} собран на {fallback}"
+    },
+    {
+      "k": "unity.material.texture_missing",
+      "v": "текстура не найдена: {path}"
+    },
+    {
+      "k": "unity.model.no_importer",
+      "v": "нет импортёра модели для {path}"
+    },
+    {
+      "k": "unity.shadergraph.failed",
+      "v": "Shader Graph {shader} не записан: {error}"
+    },
+    {
+      "k": "unity.shadergraph.package_missing",
+      "v": "Пакет Shader Graph не установлен, поэтому файлы .shadergraph не созданы. HLSL-шейдеры импортируются как обычно."
+    },
+    {
+      "k": "unity.texture.no_importer",
+      "v": "нет импортёра текстуры для {path}"
+    },
+    {
+      "k": "verify.active_pipeline",
+      "v": "активный RenderPipeline: {pipeline}"
+    },
+    {
+      "k": "verify.binding.empty_slot",
+      "v": "  {model}: пустой слот материала"
+    },
+    {
+      "k": "verify.binding.foreign_material",
+      "v": "  {model}: слот занят чужим материалом {material}"
+    },
+    {
+      "k": "verify.binding.model_failed",
+      "v": "модель не загрузилась: {path}"
+    },
+    {
+      "k": "verify.binding.no_renderers",
+      "v": "  {model}: у модели нет рендереров"
+    },
+    {
+      "k": "verify.binding.ok",
+      "v": "  привязка OK: {model} ({count} слот(ов))"
+    },
+    {
+      "k": "verify.files_copied",
+      "v": "скопировано файлов: {count}"
+    },
+    {
+      "k": "verify.hlsl_not_checked",
+      "v": "компиляция HLSL здесь НЕ проверяется — для этого нужен рендер ({method})"
+    },
+    {
+      "k": "verify.import_log",
+      "v": "---- ЛОГ ИМПОРТА ----"
+    },
+    {
+      "k": "verify.manifest_unreadable",
+      "v": "манифест не читается: {error}"
+    },
+    {
+      "k": "verify.material.broken_shader",
+      "v": "материал с битым шейдером: {path}"
+    },
+    {
+      "k": "verify.material.not_created",
+      "v": "материал не создан: {path}"
+    },
+    {
+      "k": "verify.materials",
+      "v": "материалов: {count} (свой шейдер {shader}, Lit {fallback}, не вышло {failed})"
+    },
+    {
+      "k": "verify.materials_without_shader",
+      "v": "материалов без шейдера: {count}"
+    },
+    {
+      "k": "verify.meshes",
+      "v": "меши: {meshes}, скелетки: {skeletal}, клипы: {clips}"
+    },
+    {
+      "k": "verify.models_unbound",
+      "v": "моделей с непривязанными материалами: {count}"
+    },
+    {
+      "k": "verify.no_manifest",
+      "v": "нет манифеста {path}"
+    },
+    {
+      "k": "verify.no_output_arg",
+      "v": "не передан -uassetOutput"
+    },
+    {
+      "k": "verify.pipeline_from_manifest",
+      "v": "пайплайн из манифеста: {pipeline}"
+    },
+    {
+      "k": "verify.render.failure",
+      "v": "провал: {error}"
+    },
+    {
+      "k": "verify.render.material_row",
+      "v": "  {material} шейдер={shader} поддерживается={supported} сообщений={messages}"
+    },
+    {
+      "k": "verify.render.models_screenshot",
+      "v": "снимок моделей: {path} ({count} шт.)"
+    },
+    {
+      "k": "verify.render.no_models",
+      "v": "моделей для съёмки не нашлось"
+    },
+    {
+      "k": "verify.render.no_shader",
+      "v": "<нет шейдера>"
+    },
+    {
+      "k": "verify.render.objects_in_frame",
+      "v": "объектов в кадре: {count}"
+    },
+    {
+      "k": "verify.render.screenshot_saved",
+      "v": "снимок сохранён: {path}"
+    },
+    {
+      "k": "verify.render.shaders_with_errors",
+      "v": "шейдеров с ошибками: {count}"
+    },
+    {
+      "k": "verify.shader.compiled",
+      "v": "  скомпилирован: {shader}"
+    },
+    {
+      "k": "verify.shader.error_line",
+      "v": "    строка {line}: {message}"
+    },
+    {
+      "k": "verify.shader.errors_in",
+      "v": "ОШИБКИ в {shader}:"
+    },
+    {
+      "k": "verify.shader.failed_to_load",
+      "v": "ШЕЙДЕР НЕ ЗАГРУЗИЛСЯ: {path}"
+    },
+    {
+      "k": "verify.shader.find_returned_null",
+      "v": "    Shader.Find({shader}) вернул null"
+    },
+    {
+      "k": "verify.shader.imported",
+      "v": "импортирован  {shader}"
+    },
+    {
+      "k": "verify.shader.warnings",
+      "v": "  (предупреждений: {count})"
+    },
+    {
+      "k": "verify.shaders_with_errors",
+      "v": "шейдеров с ошибками импорта: {count}"
+    },
+    {
+      "k": "verify.summary",
+      "v": "---- ИТОГ ----"
+    },
+    {
+      "k": "verify.textures_configured",
+      "v": "настроено текстур: {count}"
+    }
+  ]
+}

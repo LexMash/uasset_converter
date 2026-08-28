@@ -1,0 +1,16 @@
+{
+  "name": "com.uasset.converter",
+  "version": "1.0.0",
+  "displayName": "Uasset Converter",
+  "description": "Конвертация ассетов Unreal Engine в Unity: текстуры, меши, анимации, материалы и шейдеры. Запускается прямо из редактора.\n\nUnreal Engine to Unity asset converter: textures, meshes, animations, materials and shaders. Runs from the editor.",
+  "unity": "2022.3",
+  "keywords": ["unreal", "converter", "import", "shader", "pipeline"],
+  "hideInEditor": false,
+  "samples": [
+    {
+      "displayName": "Render Check (URP only)",
+      "description": "Визуальная проверка результата: собирает сцену из сконвертированных мешей и рендерит её в PNG. Жёстко завязана на URP, поэтому вынесена в сэмпл.",
+      "path": "Samples~/RenderCheck"
+    }
+  ]
+}

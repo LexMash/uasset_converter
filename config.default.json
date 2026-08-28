@@ -1,0 +1,209 @@
+{
+  "_comment": "Эталон конфига. При первом запуске копируется в config.json — правь копию, а не этот файл.",
+  "paths": {
+    "ue_project": "",
+    "ue_engine_dir": "",
+    "output_dir": "output",
+    "python": ""
+  },
+  "pipeline": "urp",
+  "export": {
+    "textures": true,
+    "static_meshes": true,
+    "skeletal_meshes": false,
+    "animations": false,
+    "materials": true,
+    "material_graphs": true
+  },
+  "scope": {
+    "mode": "test",
+    "include_paths": [],
+    "exclude_paths": [
+      "/Game/__ExternalActors__",
+      "/Game/__ExternalObjects__",
+      "/Game/Collections",
+      "/Game/Developers",
+      "/Game/Localization"
+    ],
+    "test_subset": [
+      "/Game/ModSciInteriors/Meshes/SM_Ceiling_Main",
+      "/Game/ModSciInteriors/Materials/MI_Floor_A",
+      "/Game/ModSciInteriors/Materials/MI_GlossyBlack",
+      "/Game/ModSciInteriors/Materials/MI_Red",
+      "/Game/ModSciInteriors/Materials/M_Base_Solid",
+      "/Game/ModSciInteriors/Materials/M_Base_RegUV1",
+      "/Game/ModSciInteriors/Materials/M_Base_Trim",
+      "/Game/ModSciInteriors/Materials/M_TextureEmissive",
+      "/Game/ModSciInteriors/Materials/M_SolidLight",
+      "/Game/ModSciInteriors/Materials/M_Glass_Base",
+      "/Game/LevelPrototyping/Meshes/SM_Cube",
+      "/Game/LevelPrototyping/Textures/T_GridChecker_A",
+      "/Game/Characters/Mannequins/Meshes/SKM_Manny_Simple",
+      "/Game/Characters/Mannequins/Anims/Unarmed/Walk/MF_Unarmed_Walk_Fwd",
+      "/Game/Characters/Mannequins/Anims/Unarmed/Jog/MF_Unarmed_Jog_Fwd",
+      "/Game/Characters/Mannequins/Anims/Death/MM_Death_Front_01"
+    ]
+  },
+  "shader_gen": {
+    "roots": [
+      "/Game"
+    ],
+    "namespace": "UassetConverted",
+    "skip": [
+      "M_Decal_Base",
+      "M_Dust_Particle",
+      "M_smoke_subUV",
+      "M_Base_BasicUI"
+    ],
+    "skip_reason": {
+      "M_Decal_Base": "Декали в URP — отдельная механика (Decal Projector), автоперенос невозможен",
+      "M_Dust_Particle": "Материал частиц; сами системы Niagara не конвертируются",
+      "M_smoke_subUV": "Материал частиц (SubUV); сами системы Niagara не конвертируются",
+      "M_Base_BasicUI": "UI-материал; в Unity другая система интерфейса"
+    },
+    "output": "hlsl"
+  },
+  "textures": {
+    "format": "png",
+    "hdr_format": "exr",
+    "flip_normal_green": true
+  },
+  "meshes": {
+    "export_vertex_color": true,
+    "export_lods": false,
+    "export_collision": false,
+    "export_morph_targets": true,
+    "ascii_fbx": false
+  },
+  "animations": {
+    "loop_patterns": [
+      "(?i)idle",
+      "(?i)walk",
+      "(?i)jog",
+      "(?i)run",
+      "(?i)loop",
+      "(?i)aim"
+    ],
+    "noloop_patterns": [
+      "(?i)jump",
+      "(?i)attack",
+      "(?i)death",
+      "(?i)hitreact",
+      "(?i)land",
+      "(?i)start",
+      "(?i)stop"
+    ]
+  },
+  "unity": {
+    "target_root": "Assets/UassetConverted",
+    "avatar_type": "Generic",
+    "mesh_scale": 1.0
+  },
+  "material_mapping": {
+    "_comment": "Fallback для материалов, чей мастер не транспилировался. Порядок правил = приоритет: побеждает самое раннее совпавшее.",
+    "texture_params": [
+      {
+        "match": "(?i)^(diffuse|base ?colou?r|albedo|basetex)",
+        "slot": "baseMap"
+      },
+      {
+        "match": "(?i)^(normal|norm|bump)",
+        "slot": "normal"
+      },
+      {
+        "match": "(?i)^rough",
+        "slot": "roughness"
+      },
+      {
+        "match": "(?i)^metal",
+        "slot": "metallic"
+      },
+      {
+        "match": "(?i)^(ao|occlusion|ambient)",
+        "slot": "occlusion"
+      },
+      {
+        "match": "(?i)^(emissive|emission|glow)",
+        "slot": "emission"
+      },
+      {
+        "match": "(?i)^(opacity|alpha|mask)",
+        "slot": "opacity"
+      },
+      {
+        "match": "(?i)_(mra|orm|arm|rma)$",
+        "slot": "packed",
+        "channels": "MRA"
+      }
+    ],
+    "scalar_params": [
+      {
+        "match": "(?i)^metal",
+        "slot": "metallic"
+      },
+      {
+        "match": "(?i)^rough",
+        "slot": "roughness"
+      },
+      {
+        "match": "(?i)^spec",
+        "slot": "specular"
+      },
+      {
+        "match": "(?i)^(emissive|emission).*(intensity|power|mult)",
+        "slot": "emissionIntensity"
+      },
+      {
+        "match": "(?i)^(opacity|alpha)",
+        "slot": "alpha"
+      }
+    ],
+    "vector_params": [
+      {
+        "match": "(?i)^(base ?colou?r|albedo|surface ?colou?r|diffuse ?colou?r|main ?colou?r)$",
+        "slot": "baseColor"
+      },
+      {
+        "match": "(?i)^(colou?r|tint)$",
+        "slot": "baseColor"
+      },
+      {
+        "match": "(?i)^(emissive|emission)",
+        "slot": "emissionColor"
+      },
+      {
+        "match": "(?i)(base ?colou?r|albedo|surface ?colou?r|diffuse)",
+        "slot": "baseColor"
+      },
+      {
+        "match": "(?i)(colou?r|tint)",
+        "slot": "baseColor"
+      }
+    ],
+    "texture_name_hints": {
+      "_comment": "Страховка, когда имя параметра ничего не говорит — классификация по имени файла текстуры",
+      "baseMap": [
+        "(?i)_(d|diff|diffuse|albedo|basecolor|c)$"
+      ],
+      "normal": [
+        "(?i)_(n|nrm|norm|normal|normals)$"
+      ],
+      "roughness": [
+        "(?i)_(r|rough|roughness)$"
+      ],
+      "metallic": [
+        "(?i)_(m|metal|metallic)$"
+      ],
+      "occlusion": [
+        "(?i)_(ao|occlusion)$"
+      ],
+      "emission": [
+        "(?i)_(e|em|emissive|emission)$"
+      ],
+      "packed": [
+        "(?i)_(mra|orm|arm|rma|mask)$"
+      ]
+    }
+  },
+  "language": "auto"
+}

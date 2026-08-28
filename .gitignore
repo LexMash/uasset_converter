@@ -1,0 +1,14 @@
+# Живой конфиг пользователя: в нём абсолютные пути к его проекту.
+# Эталон лежит в config.default.json.
+config.json
+
+output/
+logs/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Unity-мусор, если пакет разрабатывают внутри проекта
+*.csproj
+*.sln
+*.meta

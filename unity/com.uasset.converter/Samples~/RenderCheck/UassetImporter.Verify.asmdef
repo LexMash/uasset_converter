@@ -1,0 +1,13 @@
+{
+    "name": "UassetImporter.Verify",
+    "rootNamespace": "UassetImporter.Verify",
+    "references": [
+        "UassetImporter.Editor",
+        "Unity.RenderPipelines.Universal.Runtime",
+        "Unity.RenderPipelines.Universal.Editor",
+        "Unity.RenderPipelines.Core.Runtime"
+    ],
+    "includePlatforms": ["Editor"],
+    "autoReferenced": true,
+    "noEngineReferences": false
+}

@@ -1,5 +1,14 @@
 # План: конвертация Unreal Level в Unity Scene
 
+> **СТАТУС (2026-09-01): РЕАЛИЗОВАНО.** Python-ядро (`level_export.py`, режим `levels`
+> в `ue_export.py`/`convert.py`, `process_levels` в `postprocess.py`) и C#-сторона Unity
+> (`SceneBuilder.cs`, `LevelImportWindow.cs`, модели уровня в `UassetManifest.cs`,
+> `MaterialBuilder.LoadExisting`) готовы. По решению пользователя сборка сцен — **отдельный
+> пункт меню** `Tools → Uasset Converter → Import Levels`, а НЕ шаг общего Import; одна сцена
+> на уровень, меши как prefab-инстансы. Формула координат из §5 реализована в
+> `SceneBuilder.UeToUnity*`; знаки кватерниона ещё не проверены визуально в Unity. Детали —
+> в разделе «Unity side» в [CLAUDE.md](CLAUDE.md). Ниже — исходный план как справка по дизайну.
+
 ## Краткое резюме
 
 Добавить отдельный режим `Levels`, в котором пользователь выбирает несколько `.umap`. Python внутри Unreal:

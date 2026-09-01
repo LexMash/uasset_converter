@@ -107,6 +107,16 @@ def _tint_function():
     return f.build()
 
 
+def two_output_function():
+    """Функция с двумя выходами: прямой проброс и инверсия одного входа."""
+    f = Graph("/Game/Test/MF_TwoOut")
+    colour = f.node("FunctionInput", input_name="Colour", input_type="FunctionInput_Vector3")
+    inverted = f.node("OneMinus", {"": colour})
+    f.node("FunctionOutput", {"": colour}, output_name="Straight")
+    f.node("FunctionOutput", {"": inverted}, output_name="Inverted")
+    return f.build()
+
+
 def material_function_inline():
     """Любая функция материала инлайнится, а не превращается в TODO."""
     g = Graph("/Game/Test/M_FunctionCall")
@@ -120,7 +130,8 @@ def material_function_inline():
     return g.connect("MP_BASE_COLOR", call).build()
 
 
-FUNCTIONS = {"/Game/Test/MF_Tint": _tint_function()}
+FUNCTIONS = {"/Game/Test/MF_Tint": _tint_function(),
+             "/Game/Test/MF_TwoOut": two_output_function()}
 
 ALL = {
     "math_extended": math_extended,

@@ -98,6 +98,32 @@ def test_material_function_is_inlined():
     assert "*" in text
 
 
+def test_material_function_selects_requested_output():
+    """Из функции с несколькими выходами берётся запрошенный, а не первый."""
+    from graphbuilder import Graph
+
+    def material(requested):
+        g = Graph("/Game/Test/M_Sel")
+        base = g.node("VectorParameter", parameter_name="Base",
+                      default_value=[1.0, 0.5, 0.25, 1.0])
+        call = g.node("MaterialFunctionCall", {"Colour": (base, "RGB")},
+                      material_function="/Game/Test/MF_TwoOut")
+        g.parameter("vectors", "Base", [1.0, 0.5, 0.25, 1.0])
+        return g.connect("MP_BASE_COLOR", call, requested).build()
+
+    straight, _ = shader_gen.generate_shader(
+        material("Straight"), "UassetConverted/Straight",
+        functions=fixtures_nodes.FUNCTIONS)
+    inverted, _ = shader_gen.generate_shader(
+        material("Inverted"), "UassetConverted/Inverted",
+        functions=fixtures_nodes.FUNCTIONS)
+
+    # Выход "Inverted" — это нода OneMinus (её эмит помечает код комментарием),
+    # "Straight" — просто проброс входа без неё.
+    assert "OneMinus" not in straight, "взят не тот выход: пришёл Inverted вместо Straight"
+    assert "OneMinus" in inverted, "запрошенный выход Inverted не выбран"
+
+
 def test_unknown_function_still_reports():
     """Функция, графа которой нет в манифесте, обязана остаться в отчёте."""
     graph = fixtures_nodes.material_function_inline()

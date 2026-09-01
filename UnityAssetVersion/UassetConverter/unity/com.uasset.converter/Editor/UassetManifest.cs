@@ -109,16 +109,26 @@ namespace UassetImporter
         public string file;
     }
 
+    // Ссылка на уровень в unity_manifest.json. Сам level-JSON лежит по `file`
+    // относительно output и разбирается моделями ниже (LevelFile и др.).
+    [Serializable]
+    public class LevelEntry
+    {
+        public string uePath;
+        public string name;
+        public string file;
+    }
+
     [Serializable]
     public class UassetManifest
     {
-        public string pipeline;
         public TextureEntry[] textures;
         public MeshEntry[] meshes;
         public SkeletalMeshEntry[] skeletalMeshes;
         public AnimationEntry[] animations;
         public MaterialEntry[] materials;
         public ShaderEntry[] shaders;
+        public LevelEntry[] levels;
 
         public static UassetManifest Load(string json)
         {
@@ -129,7 +139,94 @@ namespace UassetImporter
             manifest.animations ??= Array.Empty<AnimationEntry>();
             manifest.materials ??= Array.Empty<MaterialEntry>();
             manifest.shaders ??= Array.Empty<ShaderEntry>();
+            manifest.levels ??= Array.Empty<LevelEntry>();
             return manifest;
+        }
+    }
+
+    // --- Модель level-JSON (пишет level_export.py, schemaVersion = 1) ---------
+    //
+    // Поля названы точь-в-точь как в JSON: JsonUtility матчит по имени. Сырые
+    // трансформы (сантиметры + кватернион в осях UE) переводит в оси/метры Unity
+    // SceneBuilder — единственная точка конвертации координат.
+
+    [Serializable]
+    public class LevelTransform
+    {
+        public float[] locationCm;   // [x, y, z] в сантиметрах UE
+        public float[] rotationQuat; // [x, y, z, w] в осях UE
+        public float[] scale;        // [x, y, z]
+    }
+
+    [Serializable]
+    public class MaterialOverride
+    {
+        public int index;        // индекс слота материала на компоненте
+        public string material;  // UE-путь материала-переопределения
+    }
+
+    [Serializable]
+    public class LevelActor
+    {
+        public string id;
+        public string name;
+        public string parentId;
+        public LevelTransform transform;
+        public bool active;
+        public bool hidden;
+    }
+
+    [Serializable]
+    public class LevelObject
+    {
+        public string id;
+        public string parentId;      // id актёра-владельца
+        public string mesh;          // UE-путь статического меша
+        public LevelTransform transform;
+        public MaterialOverride[] materialOverrides;
+        public string componentType;
+        public int ismIndex;         // -1 если это не инстанс ISM/HISM
+    }
+
+    [Serializable]
+    public class LevelLight
+    {
+        public string id;
+        public string parentId;
+        public string unityType;     // Directional / Point / Spot / Area
+        public LevelTransform transform;
+        public float[] color;        // [r, g, b]
+        public float unityIntensity;
+        public float range;
+        public float spotAngle;
+        public float innerSpotAngle;
+        public float[] areaSize;     // [ширина, высота] для Area
+        public bool castShadows;
+        public bool visible;
+        public string lightmapMode;  // Baked / Mixed / Realtime
+    }
+
+    [Serializable]
+    public class LevelFile
+    {
+        public int schemaVersion;
+        public string uePath;
+        public string name;
+        public LevelActor[] actors;
+        public LevelObject[] objects;
+        public LevelLight[] lights;
+
+        // Версия формата, которую понимает этот код. Совпадает с
+        // level_export.SCHEMA_VERSION на питоновской стороне.
+        public const int SupportedSchemaVersion = 1;
+
+        public static LevelFile Load(string json)
+        {
+            var level = UnityEngine.JsonUtility.FromJson<LevelFile>(json);
+            level.actors ??= Array.Empty<LevelActor>();
+            level.objects ??= Array.Empty<LevelObject>();
+            level.lights ??= Array.Empty<LevelLight>();
+            return level;
         }
     }
 

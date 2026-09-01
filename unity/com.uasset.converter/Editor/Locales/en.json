@@ -19,6 +19,10 @@
       "v": "no .uproject at {path}"
     },
     {
+      "k": "cli.error.required_assets",
+      "v": "the 'levels' scope needs these asset types, but they are disabled: {types}. Enable them, or pass --allow-required-assets to run anyway."
+    },
+    {
       "k": "cli.launching_unreal",
       "v": "Starting Unreal: {editor}"
     },
@@ -41,6 +45,46 @@
     {
       "k": "export.error_on",
       "v": "ERROR on {path}: {error}"
+    },
+    {
+      "k": "export.level.skip.audio",
+      "v": "audio component — sound is out of scope"
+    },
+    {
+      "k": "export.level.skip.camera",
+      "v": "camera component — cameras are not transferred to the scene"
+    },
+    {
+      "k": "export.level.skip.decal",
+      "v": "decal component — decals are a separate mechanic in Unity"
+    },
+    {
+      "k": "export.level.skip.landscape",
+      "v": "landscape component — terrain is not converted"
+    },
+    {
+      "k": "export.level.skip.load_failed",
+      "v": "the level could not be loaded"
+    },
+    {
+      "k": "export.level.skip.niagara",
+      "v": "Niagara component — particle systems are not converted"
+    },
+    {
+      "k": "export.level.skip.particles",
+      "v": "cascade particle component — particle systems are not converted"
+    },
+    {
+      "k": "export.level.skip.skylight",
+      "v": "sky light — no direct counterpart, set up ambient lighting in Unity"
+    },
+    {
+      "k": "export.level_collected",
+      "v": "level {name}: {objects} objects, {lights} lights"
+    },
+    {
+      "k": "export.level_subset",
+      "v": "levels: {levels}, assets to export with dependencies: {count}"
     },
     {
       "k": "export.queued",
@@ -163,6 +207,10 @@
       "v": "Folders for the “Selected folders” scope"
     },
     {
+      "k": "gui.box.levels",
+      "v": "Levels for the “Levels → Scenes” scope"
+    },
+    {
       "k": "gui.box.log",
       "v": "Progress"
     },
@@ -267,6 +315,22 @@
       "v": "Previous reference replaced: {previous}"
     },
     {
+      "k": "gui.levels.no_content",
+      "v": "no Content folder found"
+    },
+    {
+      "k": "gui.levels.none_selected",
+      "v": "no levels selected"
+    },
+    {
+      "k": "gui.levels.reload",
+      "v": "Refresh levels"
+    },
+    {
+      "k": "gui.levels.selected",
+      "v": "levels selected: {count}"
+    },
+    {
       "k": "gui.option.avatar",
       "v": "Avatar for skeletal meshes:"
     },
@@ -279,16 +343,12 @@
       "v": "Language:"
     },
     {
-      "k": "gui.option.pipeline",
-      "v": "Unity render pipeline:"
+      "k": "gui.option.light_multiplier",
+      "v": "Light intensity ×"
     },
     {
       "k": "gui.option.scope",
       "v": "Conversion scope:"
-    },
-    {
-      "k": "gui.option.shader_output",
-      "v": "Shader output:"
     },
     {
       "k": "gui.path.engine",
@@ -359,24 +419,16 @@
       "v": "Entire Content"
     },
     {
+      "k": "gui.scope.levels",
+      "v": "Levels → Scenes"
+    },
+    {
       "k": "gui.scope.selected",
       "v": "Selected folders"
     },
     {
       "k": "gui.scope.test",
       "v": "Test subset"
-    },
-    {
-      "k": "gui.shader_output.both",
-      "v": "Both"
-    },
-    {
-      "k": "gui.shader_output.hlsl",
-      "v": "HLSL shader file"
-    },
-    {
-      "k": "gui.shader_output.shadergraph",
-      "v": "Shader Graph"
     },
     {
       "k": "gui.status.aborted",
@@ -413,6 +465,34 @@
     {
       "k": "post.done",
       "v": "Done."
+    },
+    {
+      "k": "post.level.file_missing",
+      "v": "the level file {file} is listed in the manifest but not found on disk"
+    },
+    {
+      "k": "post.level.light_lumens",
+      "v": "intensity converted from lumens to candelas approximately"
+    },
+    {
+      "k": "post.level.light_no_intensity",
+      "v": "the light has no intensity value, brightness left at zero"
+    },
+    {
+      "k": "post.level.light_note",
+      "v": "light: {note}"
+    },
+    {
+      "k": "post.level.light_unit_unknown",
+      "v": "the intensity unit is not recognised, the raw number was kept"
+    },
+    {
+      "k": "post.level.missing_ref",
+      "v": "references a {kind} that was not exported: {path}"
+    },
+    {
+      "k": "post.level.skipped_component",
+      "v": "component {component} was not transferred — {reason}"
     },
     {
       "k": "post.loop.matched_loop",
@@ -457,6 +537,10 @@
     {
       "k": "post.summary.animations",
       "v": "animations:         {count}"
+    },
+    {
+      "k": "post.summary.levels",
+      "v": "levels:             {count}"
     },
     {
       "k": "post.summary.manifest",
@@ -567,6 +651,10 @@
       "v": "Animations"
     },
     {
+      "k": "section.levels",
+      "v": "Levels"
+    },
+    {
       "k": "section.materials",
       "v": "Materials"
     },
@@ -597,10 +685,6 @@
     {
       "k": "shader.done",
       "v": "Done: {written} shaders written, {reused} reused, TODO: {todos}"
-    },
-    {
-      "k": "shader.hdrp_needs_shadergraph",
-      "v": "HDRP is selected: a hand-written Lit shader is not supported by HDRP, so only the Shader Graph output is produced. Import it from the Unity window."
     },
     {
       "k": "shader.header_todo",
@@ -661,6 +745,10 @@
     {
       "k": "summary.errors",
       "v": "errors"
+    },
+    {
+      "k": "summary.levels",
+      "v": "levels"
     },
     {
       "k": "summary.material_functions",
@@ -815,14 +903,6 @@
       "v": "What to convert"
     },
     {
-      "k": "unity.convert.shadergraph_none",
-      "v": "No graph_ir.json in the output — the converter did not generate an IR. Set the shader output to Shader Graph or Both and run the shader step again."
-    },
-    {
-      "k": "unity.convert.shadergraph_written",
-      "v": "Shader Graph files written: {count}"
-    },
-    {
       "k": "unity.convert.starting_import",
       "v": "Conversion finished, starting the import"
     },
@@ -947,6 +1027,82 @@
       "v": "Language"
     },
     {
+      "k": "unity.level.built",
+      "v": "scene {name} built: {objects} objects, {lights} lights, {missing} missing"
+    },
+    {
+      "k": "unity.level.exists_body",
+      "v": "Scene {path} already exists. Overwrite it?"
+    },
+    {
+      "k": "unity.level.exists_title",
+      "v": "Scene already exists"
+    },
+    {
+      "k": "unity.level.file_missing",
+      "v": "level file not found: {path}"
+    },
+    {
+      "k": "unity.level.finished",
+      "v": "scenes built: {count}"
+    },
+    {
+      "k": "unity.level.header",
+      "v": "Build Unity scenes from Unreal levels"
+    },
+    {
+      "k": "unity.level.hint",
+      "v": "Import meshes and materials with “Import” first — this step only places already-imported assets into scenes."
+    },
+    {
+      "k": "unity.level.mesh_missing",
+      "v": "mesh {mesh} is not in the manifest — object skipped in {level}"
+    },
+    {
+      "k": "unity.level.model_missing",
+      "v": "imported model not found: {path} — object skipped in {level}"
+    },
+    {
+      "k": "unity.level.none",
+      "v": "there are no levels in the manifest"
+    },
+    {
+      "k": "unity.level.override_missing",
+      "v": "override material {material} not found in {level}"
+    },
+    {
+      "k": "unity.level.overwrite",
+      "v": "Overwrite"
+    },
+    {
+      "k": "unity.level.run",
+      "v": "Build scenes"
+    },
+    {
+      "k": "unity.level.schema_mismatch",
+      "v": "level {name} skipped: schema version {got}, expected {want}"
+    },
+    {
+      "k": "unity.level.skip",
+      "v": "Skip"
+    },
+    {
+      "k": "unity.level.skipped",
+      "v": "level {name} skipped (scene not overwritten)"
+    },
+    {
+      "k": "unity.level.step",
+      "v": "Building scenes…"
+    },
+    {
+      "k": "unity.level.unreadable",
+      "v": "could not read level {name}: {error}"
+    },
+    {
+      "k": "unity.level.window_title",
+      "v": "Uasset Levels"
+    },
+    {
       "k": "unity.log",
       "v": "Log"
     },
@@ -965,14 +1121,6 @@
     {
       "k": "unity.model.no_importer",
       "v": "no model importer for {path}"
-    },
-    {
-      "k": "unity.shadergraph.failed",
-      "v": "Shader Graph {shader} was not written: {error}"
-    },
-    {
-      "k": "unity.shadergraph.package_missing",
-      "v": "The Shader Graph package is not installed, so .shadergraph files were not generated. The HLSL shaders are imported as usual."
     },
     {
       "k": "unity.texture.no_importer",
@@ -1049,10 +1197,6 @@
     {
       "k": "verify.no_output_arg",
       "v": "-uassetOutput was not passed"
-    },
-    {
-      "k": "verify.pipeline_from_manifest",
-      "v": "pipeline from manifest: {pipeline}"
     },
     {
       "k": "verify.render.failure",

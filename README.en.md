@@ -4,8 +4,8 @@
 
 Moves art from an Unreal Engine project into Unity: textures, meshes,
 animations and materials. Unreal master materials are transpiled into real
-shaders — HLSL or Shader Graph — rather than approximated with hand-picked
-values.
+HLSL shaders rather than approximated with hand-picked values. The target
+pipeline is **URP**.
 
 It runs two ways: from its own window, or straight from Unity via
 **Tools → Uasset Converter**. The interface switches between languages, and
@@ -19,8 +19,9 @@ adding one is a single JSON file — see
   reconstructed by a `.uasset` parser.
 - **Python 3.9 or newer** — `tkinter` for the GUI ships with the standard install.
   `pillow` and `numpy` are installed separately (see step 0).
-- **Unity 6000.x or 2022.3 LTS**, URP or HDRP. The differences between the two
-  pipelines are in [URP and HDRP](#urp-and-hdrp).
+- **Unity 6000.x or 2022.3 LTS** with **URP**. HDRP is not supported: its Lit
+  passes are internal to the pipeline and cannot be reproduced by a hand-written
+  HLSL shader.
 
 The Unreal project must be a **source project**, not a packaged game: the
 converter opens it with the editor.
@@ -190,15 +191,14 @@ Layers; each one can be run and fixed on its own.
 | `ue_export.py` | Runs **inside** Unreal. Exports files, captures material and function graphs. |
 | `graph_ir.py` | Unreal graph → a neutral intermediate representation. |
 | `backend_hlsl.py` | IR → `.shader`. |
-| `shader_gen.py` | Orchestration: manifest → shaders plus `graph_ir.json`. |
+| `shader_gen.py` | Orchestration: manifest → shaders. |
 | `postprocess.py` | Parameter resolution, channel repacking, the Unity manifest. |
-| `unity/com.uasset.converter/` | The UPM package: converter window, importer, Shader Graph builder. |
+| `unity/com.uasset.converter/` | The UPM package: converter window, importer. |
 
-Why graph traversal and text generation are separated: you cannot get a Shader
-Graph out of HLSL strings. The intermediate representation is a list of
-operations with known dimensions, and both `.shader` and `.shadergraph` are
-built from it. A new node is added once, in `graph_ir.py`, and shows up in both
-formats.
+Why graph traversal and text generation are separated: the traversal in
+`graph_ir.py` produces a neutral list of operations with known dimensions, and
+`backend_hlsl.py` renders `.shader` text from it. A new node is added once, in
+`graph_ir.py`, and coverage widens cheaply.
 
 ### Why it launches the full editor instead of a commandlet
 
@@ -244,28 +244,9 @@ An unknown node is never invented: it passes its first input through, leaves a
 
 ### Shader output format
 
-`shader_gen.output` in the config, and a dropdown in both windows:
-
-| Value | What you get |
-|---|---|
-| `hlsl` | `output/Shaders/*.shader` — self-contained HLSL. |
-| `shadergraph` | `output/Shaders/*.shadergraph` — a graph you can open and edit. |
-| `both` | Both. |
-
-`output/graph_ir.json` is always written regardless of the choice: it costs
-nothing, and it lets you switch format later without re-running the slow Unreal
-export.
-
-The `.shadergraph` itself is built by the C# side **inside Unity**, not by
-Python. The reason is that the format is internal and tied to the Shader Graph
-package version: the only reliable way to get a file that opens is to ask the
-package to write it. Operations that have a ready-made Shader Graph node become
-that node; the rest become a Custom Function carrying the same HLSL that would
-have gone into the `.shader`. Coverage is therefore identical between the two
-formats — there is no material that ports to HLSL but not to a graph.
-
-If the Shader Graph package is not installed, graph building is simply skipped
-and the HLSL shaders import as usual.
+The transpiler writes self-contained HLSL — `output/Shaders/*.shader` for
+URP/Lit. The template does not `#include` the URP package's `LitInput.hlsl`, so
+the file survives package updates.
 
 The graph is read through `unreal.MaterialEditingLibrary` —
 `get_material_expressions`, `get_inputs_for_material_expression`,
@@ -343,9 +324,7 @@ config automatically, so updating does not break your settings.
   listed explicitly** — dependencies point downward, and a clip references a
   skeleton rather than the other way round.
 - `language` — interface language code, or `auto`.
-- `pipeline` — `urp` or `hdrp`.
 - `paths.python` — the interpreter for the Unity window. Empty means find one.
-- `shader_gen.output` — `hlsl`, `shadergraph` or `both`.
 - `shader_gen.roots` — which paths to transpile into shaders.
 - `shader_gen.skip` — masters deliberately left out (decals, particles, UI),
   each with a reason in `skip_reason`.
@@ -395,23 +374,18 @@ Nodes that are missing and that do turn up in other people's packs: `Fresnel`,
 `VertexColor`, `WorldPosition`, `Time`, `If`, `Min`/`Max`, `Sine`/`Cosine`,
 `Dot`, `Normalize`, `CustomExpression`, plus any `MaterialFunctionCall` other
 than the two known ones. Each is added to `shader_gen.py` as a single
-`node_<Name>` method in `graph_ir.py` — widening coverage is cheap, and it
-lands in both output formats at once.
+`node_<Name>` method in `graph_ir.py` — widening coverage is cheap.
 
-### URP and HDRP
+### Why URP only
 
-| | URP | HDRP |
-|---|---|---|
-| Transpiled shaders | `.shader` and/or Shader Graph | Shader Graph only |
-| Fallback materials | `Universal Render Pipeline/Lit` | `HDRP/Lit` |
-| Mask map | `_MetallicGlossMap`: RGB = metallic, A = smoothness | `_MaskMap`: R = metallic, G = occlusion, B = detail, A = smoothness |
-| Occlusion | its own `_OcclusionMap` | inside `_MaskMap`; there is no separate slot |
+HDRP is not supported: the set and order of its Lit passes are internal to the
+pipeline, and Unity offers no supported way to write such a shader by hand. The
+transpiler emits URP HLSL, so:
 
-There is no hand-written `.shader` for HDRP and there will not be one: the set
-and order of its passes are internal to the pipeline, and Unity offers no
-supported way to write such a shader by hand. So with `pipeline: hdrp` the
-shader step writes only the IR and says so in the log, and the graph is built in
-Unity against `HDTarget`.
+- transpiled shaders are `output/Shaders/*.shader` for URP/Lit;
+- fallback materials use the default `Universal Render Pipeline/Lit`;
+- the mask map is `_MetallicGlossMap` (RGB = metallic, A = smoothness), with
+  occlusion kept as its own `_OcclusionMap`.
 
 The `.shader` files themselves are self-contained: apart from the URP package
 they depend on nothing, and they move into any URP project by plain copying
@@ -458,7 +432,7 @@ UAC_REGEN=1 python -m pytest tests/test_shader_golden.py
 
 and the review diff then shows exactly what changed in the shaders. The rest:
 `test_nodes.py` — every new node really does port and leaves no TODO;
-`test_pipelines.py` — the URP and HDRP mask layouts are not mixed up;
+`test_pipelines.py` — the URP mask layout is packed correctly;
 `test_pipeline_smoke.py` — the steps fit together, in both languages;
 `test_locale_keys.py` — every `Loc.T` key used by the C# side exists and every
 placeholder in it is given an argument.
@@ -487,9 +461,9 @@ and renders a frame to PNG:
 ```
 
 Its files live in the package sample (`Samples~/RenderCheck`) and are
-deliberately not part of the importer: they are hard-wired to URP, whereas the
-importer has to work in an HDRP project too. Install it via Package Manager →
-the package → Samples → Import.
+deliberately not part of the importer: they are hard-wired to URP's
+pipeline-asset creation API, which the importer core has no reason to know
+about. Install it via Package Manager → the package → Samples → Import.
 
 The explanatory text of both checks is localised; the machine-readable markers
 are not. The `RESULT: OK` / `RESULT: PROBLEMS FOUND` line, the

@@ -369,7 +369,7 @@ def main():
     parser = argparse.ArgumentParser(description="Unreal -> Unity asset converter")
     parser.add_argument("--cli", action="store_true", help="run in console, no GUI")
     parser.add_argument("--step", choices=STEPS, default="all", help="which step to run")
-    parser.add_argument("--scope", choices=("test", "selected", "all"),
+    parser.add_argument("--scope", choices=("test", "selected", "all", "levels"),
                         help="override scope.mode from the config")
     parser.add_argument("--lang", help="interface language code, or 'auto'")
     parser.add_argument("--porcelain", action="store_true",
@@ -407,7 +407,7 @@ def main():
             dotted, raw = pair.split("=", 1)
             set_config_value(config, dotted.strip(), raw)
         save_config(config)
-        if not (args.config_dump or args.scan_folders or args.cli):
+        if not (args.config_dump or args.scan_folders or args.scan_levels or args.cli):
             return 0
 
     if args.config_dump:

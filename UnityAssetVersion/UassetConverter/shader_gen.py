@@ -6,10 +6,7 @@
 backend_hlsl. Здесь только оркестровка — прочитать манифест, схлопнуть
 одинаковые графы, записать файлы и индекс.
 
-Форматов вывода два, и оба берутся из одного IR:
-  * .shader  — готовый HLSL, пишется прямо здесь;
-  * graph_ir.json — нейтральное описание, из которого редакторная часть в
-    Unity собирает .shadergraph под ту версию Shader Graph, что стоит в проекте.
+Вывод один — готовый HLSL `.shader`, который собирается прямо здесь из IR.
 
 Незнакомые ноды не выдумываются: они попадают в отчёт, а в коде остаётся
 пометка TODO рядом с проброшенным первым входом.
@@ -20,7 +17,7 @@ import os
 import sys
 
 import backend_hlsl
-from graph_ir import build_ir, sanitize   # noqa: F401  (sanitize импортирует postprocess)
+from graph_ir import build_ir, sanitize   # noqa: F401  (re-export для postprocess)
 from i18n import t, set_language
 
 
@@ -85,24 +82,13 @@ def main():
                  for entry in (manifest.get("material_functions") or [])}
 
     namespace = config["shader_gen"].get("namespace", "UassetConverted")
-    output_mode = config["shader_gen"].get("output", "hlsl")
-    pipeline = config.get("pipeline", "urp")
-    write_hlsl = output_mode in ("hlsl", "both")
-
-    # Рукописный Lit-шейдер для HDRP невозможен: его проходы и их порядок —
-    # внутреннее дело пайплайна, и поддерживаемого способа написать такой
-    # шейдер вручную у Unity нет. Для HDRP путь один — Shader Graph, и IR
-    # для него всё равно пишется ниже.
-    if pipeline == "hdrp" and write_hlsl:
-        print(t("shader.hdrp_needs_shadergraph"))
-        write_hlsl = False
 
     shaders_dir = os.path.join(out_dir, "Shaders")
     os.makedirs(shaders_dir, exist_ok=True)
 
     by_signature = {}     # отпечаток -> имя шейдера
     used_names = {}       # имя -> отпечаток
-    results, all_todos, ir_graphs = [], [], []
+    results, all_todos = [], []
 
     for graph in sorted(graphs, key=lambda g: g["ue_path"]):
         name = graph["ue_path"].rsplit("/", 1)[-1]
@@ -123,16 +109,14 @@ def main():
         shader_name = "%s/%s" % (namespace, unique)
 
         text, ir = generate_shader(graph, shader_name, print, functions)
-        if write_hlsl:
-            path = os.path.join(shaders_dir, unique + ".shader")
-            with open(path, "w", encoding="utf-8", newline="\n") as fh:
-                fh.write(text)
-        ir_graphs.append(ir.to_json(shader_name, config.get("pipeline", "urp")))
+        path = os.path.join(shaders_dir, unique + ".shader")
+        with open(path, "w", encoding="utf-8", newline="\n") as fh:
+            fh.write(text)
 
         by_signature[signature] = shader_name
         used_names[unique] = signature
         results.append({"ue_path": graph["ue_path"], "shader": shader_name,
-                        "file": "Shaders/%s.shader" % unique if write_hlsl else "",
+                        "file": "Shaders/%s.shader" % unique,
                         "properties": dict(ir.properties),
                         "keywords": dict(ir.keywords),
                         "dropped_parameters": ir.dropped_parameters,
@@ -152,12 +136,6 @@ def main():
     index_path = os.path.join(out_dir, "shaders.json")
     with open(index_path, "w", encoding="utf-8") as fh:
         json.dump({"shaders": results}, fh, indent=2, ensure_ascii=False)
-
-    # IR пишем всегда, даже когда выбран только HLSL: он ничего не стоит, зато
-    # переключить формат в Unity можно потом, не перезапуская экспорт.
-    ir_path = os.path.join(out_dir, "graph_ir.json")
-    with open(ir_path, "w", encoding="utf-8") as fh:
-        json.dump({"version": 1, "graphs": ir_graphs}, fh, indent=2, ensure_ascii=False)
 
     written = sum(1 for r in results if not r["reused"])
     print("\n" + t("shader.done", written=written,

@@ -2,14 +2,14 @@
 """
 Слой 2а: граф мастер-материала Unreal -> нейтральное промежуточное представление.
 
-Зачем отдельный слой. Раньше обход графа сразу клеил строки HLSL, и из этого
-нельзя было получить второй формат вывода: Shader Graph — это не текст, а набор
-нод со связями. Поэтому обход теперь заканчивается не текстом, а списком
-операций, а текст (или .shadergraph) из него собирает бэкенд.
+Зачем отдельный слой. Обход графа держится отдельно от генерации текста: здесь
+принимаются все решения о том, ЧТО считать, а backend_hlsl только рендерит из
+готового списка операций текст .shader. Так логику переноса можно покрыть
+тестами, не разбирая при этом строки HLSL.
 
 IR намеренно маленький: около тридцати операций, у каждой известна размерность
 результата. Всё, что не ложится в этот словарь, попадает в операцию custom с
-готовым кодом HLSL — так расширение не требует правки обоих бэкендов сразу.
+готовым кодом HLSL — так расширение сводится к одному месту.
 
 Незнакомые ноды не выдумываются: они дают TODO и проброс первого входа.
 """
@@ -127,14 +127,6 @@ class Node:
         self.inputs = inputs or []      # список id других нод
         self.comment = comment
 
-    def to_json(self):
-        data = {"id": self.id, "op": self.op, "dim": self.dim, "inputs": list(self.inputs)}
-        if self.args:
-            data["args"] = self.args
-        if self.comment:
-            data["comment"] = self.comment
-        return data
-
 
 class GraphIR:
     """Результат обхода одного мастер-материала."""
@@ -157,26 +149,6 @@ class GraphIR:
         self.todos = []
         self.outputs = {}        # роль поверхности -> id ноды
         self.dropped_parameters = []
-
-    def to_json(self, shader_name, pipeline):
-        return {
-            "ue_path": self.ue_path,
-            "shader": shader_name,
-            "pipeline": pipeline,
-            "blend_mode": self.blend_mode,
-            "shading_model": self.shading_model,
-            "two_sided": self.two_sided,
-            "alpha_cutoff": self.opacity_mask_clip_value,
-            "max_uv": self.max_uv,
-            "builtins": sorted(self.builtins),
-            "properties": [dict(info, name=name) for name, info in self.properties.items()],
-            "keywords": [{"name": key, "ue_name": value} for key, value in self.keywords.items()],
-            "helpers": [{"name": name, "code": code} for name, code in sorted(self.helpers.items())],
-            "nodes": [node.to_json() for node in self.nodes],
-            "outputs": dict(self.outputs),
-            "todos": list(self.todos),
-            "dropped_parameters": list(self.dropped_parameters),
-        }
 
 
 # ----------------------------------------------------------------------------
@@ -372,6 +344,16 @@ class IRBuilder:
         берут RGB, R и A, семплится три раза вместо одного. Свизл — это уже
         просто операция поверх готового значения.
         """
+        # Материал-функция с несколькими выходами даёт разный результат под
+        # разные запрошенные выходы, поэтому её кэшируем по (нода, выход), а имя
+        # выхода передаём внутрь — свизлом поверх его не подобрать.
+        if self.nodes[index]["type"] == "MaterialFunctionCall":
+            call_key = (id(self._scope), index, output_name)
+            if call_key not in self._cache:
+                self._cache[call_key] = self.node_MaterialFunctionCall(
+                    self.nodes[index], output_name)
+            return self._cache[call_key]
+
         cache_key = (id(self._scope), index)
         if cache_key not in self._cache:
             node = self.nodes[index]
@@ -781,7 +763,7 @@ class IRBuilder:
 
     # -- вызовы функций материала -------------------------------------------
 
-    def node_MaterialFunctionCall(self, node):
+    def node_MaterialFunctionCall(self, node, requested_output=None):
         path = str(node["props"].get("material_function") or "")
         name = path.rsplit("/", 1)[-1]
 
@@ -791,7 +773,7 @@ class IRBuilder:
 
         function_graph = self.functions.get(path)
         if function_graph is not None and path not in self._function_stack:
-            return self._inline_function(node, path, function_graph)
+            return self._inline_function(node, path, function_graph, requested_output)
 
         self.note_todo(node, "shader.todo.function_not_ported", path=path or "<unnamed>")
         return self.fallback_node(node)
@@ -805,14 +787,15 @@ class IRBuilder:
         self.helper(function)
         return self.emit("call", out_dim, {"function": function}, arguments, comment=name)
 
-    def _inline_function(self, node, path, function_graph):
+    def _inline_function(self, node, path, function_graph, requested_output=None):
         """
         Инлайн графа функции материала.
 
         Вход FunctionInput внутри функции — это значение соответствующего входа
-        у ноды вызова, выход FunctionOutput — результат. Рекурсия по вложенным
-        вызовам ограничена стеком путей: материал с функцией, вызывающей саму
-        себя, встречается редко, но повесить конвертер он не должен.
+        у ноды вызова, выход FunctionOutput — результат (тот, чьё имя запросил
+        потребитель, — `requested_output`). Рекурсия по вложенным вызовам
+        ограничена стеком путей: материал с функцией, вызывающей саму себя,
+        встречается редко, но повесить конвертер он не должен.
         """
         outer_nodes, outer_cache, outer_scope = self.nodes, self._cache, self._scope
 
@@ -826,13 +809,13 @@ class IRBuilder:
         self._scope = scope
         self._function_stack.append(path)
         try:
-            result = self._function_output(function_graph, node)
+            result = self._function_output(function_graph, node, requested_output)
         finally:
             self._function_stack.pop()
             self.nodes, self._cache, self._scope = outer_nodes, outer_cache, outer_scope
         return result
 
-    def _function_output(self, function_graph, call_node):
+    def _function_output(self, function_graph, call_node, requested_output=None):
         outputs = [n for n in function_graph["nodes"] if n["type"] == "FunctionOutput"]
         if not outputs:
             self.note_todo(call_node, "shader.todo.function_not_ported",
@@ -842,10 +825,11 @@ class IRBuilder:
         # Функция может отдавать несколько выходов; берём тот, чьё имя совпало
         # с запрошенным, иначе первый — так же ведёт себя и сам Unreal.
         chosen = outputs[0]
-        for candidate in outputs:
-            if candidate["props"].get("output_name") == call_node.get("_requested_output"):
-                chosen = candidate
-                break
+        if requested_output is not None:
+            for candidate in outputs:
+                if candidate["props"].get("output_name") == requested_output:
+                    chosen = candidate
+                    break
 
         entry = chosen["inputs"][0] if chosen["inputs"] else None
         if entry is None or entry["from"] is None:

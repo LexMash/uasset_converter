@@ -162,31 +162,15 @@ def resize_to(array, width, height):
     return np.asarray(image.resize((width, height), Image.BILINEAR), dtype=np.float32) / 255.0
 
 
-# Куда какая карта садится в дефолтном материале пайплайна.
-#
-# Разница не косметическая: URP держит металличность и гладкость в одной
-# карте (_MetallicGlossMap: RGB = metallic, A = smoothness), а HDRP собирает
-# всё в _MaskMap с другой раскладкой (R = metallic, G = ambient occlusion,
-# B = detail, A = smoothness). Одну и ту же текстуру им отдать нельзя.
-PIPELINE_SLOTS = {
-    "urp": {
-        "base": "_BaseMap", "normal": "_BumpMap", "mask": "_MetallicGlossMap",
-        "occlusion": "_OcclusionMap", "emission": "_EmissionMap",
-        "base_color": "_BaseColor", "emission_color": "_EmissionColor",
-        "metallic": "_Metallic", "smoothness": "_Smoothness",
-    },
-    "hdrp": {
-        "base": "_BaseColorMap", "normal": "_NormalMap", "mask": "_MaskMap",
-        # В HDRP окклюзия живёт в зелёном канале маски, отдельного слота нет.
-        "occlusion": None, "emission": "_EmissiveColorMap",
-        "base_color": "_BaseColor", "emission_color": "_EmissiveColor",
-        "metallic": "_Metallic", "smoothness": "_Smoothness",
-    },
+# Куда какая карта садится в дефолтном URP/Lit-материале. URP держит
+# металличность и гладкость в одной карте (_MetallicGlossMap: RGB = metallic,
+# A = smoothness), окклюзию — отдельной картой (_OcclusionMap).
+SLOTS = {
+    "base": "_BaseMap", "normal": "_BumpMap", "mask": "_MetallicGlossMap",
+    "occlusion": "_OcclusionMap", "emission": "_EmissionMap",
+    "base_color": "_BaseColor", "emission_color": "_EmissionColor",
+    "metallic": "_Metallic", "smoothness": "_Smoothness",
 }
-
-
-def pipeline_slots(config):
-    return PIPELINE_SLOTS.get(config.get("pipeline", "urp"), PIPELINE_SLOTS["urp"])
 
 
 # Что означают каналы в упакованных текстурах. Ключ — суффикс имени.
@@ -265,18 +249,16 @@ def classify_textures(textures, mapping, library):
     return slots, packed
 
 
-def build_metallic_smoothness(library, slots, packed, scalars, material_name,
-                              pipeline="urp"):
+def build_metallic_smoothness(library, slots, packed, scalars, material_name):
     """
-    Собирает карту масок в раскладке того пайплайна, куда едет материал.
+    Собирает URP-карту _MetallicGlossMap (RGB = metallic, A = smoothness).
 
     Unreal не хранит ни ту, ни другую: у него отдельные Roughness, Metallic и
     AO либо своя упаковка MRA/ORM. Поэтому карту приходится собирать заново —
     из отдельных карт, из упакованной или из скалярных значений.
 
     Возвращает (маска или None, готовая occlusion-карта или None,
-    сгенерированная occlusion-карта или None). В HDRP окклюзия уезжает внутрь
-    маски и отдельной картой не возвращается.
+    сгенерированная occlusion-карта или None).
     """
     metallic_map = slots.get("metallic")
     roughness_map = slots.get("roughness")
@@ -323,34 +305,16 @@ def build_metallic_smoothness(library, slots, packed, scalars, material_name,
         if data is not None:
             roughness = data[:, :, 0]
 
-    # Готовая карта окклюзии тоже должна доехать до маски HDRP, иначе
-    # затенение просто потеряется: отдельного слота там нет.
-    if pipeline == "hdrp" and occlusion is None and occlusion_map:
-        data = resize_to(library.load(occlusion_map, "RGB"), width, height)
-        if data is not None:
-            occlusion = data[:, :, 0]
-
     rgba = np.zeros((height, width, 4), dtype=np.float32)
-    if pipeline == "hdrp":
-        rgba[:, :, 0] = metallic
-        rgba[:, :, 1] = occlusion if occlusion is not None else 1.0
-        rgba[:, :, 2] = 0.0                  # detail mask — у Unreal аналога нет
-    else:
-        rgba[:, :, 0] = metallic
-        rgba[:, :, 1] = metallic
-        rgba[:, :, 2] = metallic
+    rgba[:, :, 0] = metallic
+    rgba[:, :, 1] = metallic
+    rgba[:, :, 2] = metallic
     rgba[:, :, 3] = 1.0 - roughness          # smoothness — это инверсия roughness
 
-    key = "ms|%s|%s|%s|%s|%g|%g" % (pipeline, metallic_map, roughness_map,
-                                    packed_source[0] if packed_source else None,
-                                    metallic_const, roughness_const)
-    suffix = "MaskMap" if pipeline == "hdrp" else "MetallicSmoothness"
-    ms_path = library.save_derived("%s_%s.png" % (material_name, suffix), rgba, key)
-
-    if pipeline == "hdrp":
-        # Окклюзия уже внутри маски — возвращать её отдельно нельзя, иначе
-        # HDRP получит две несовместимые карты на один слот.
-        return ms_path, None, None
+    key = "ms|%s|%s|%s|%g|%g" % (metallic_map, roughness_map,
+                                 packed_source[0] if packed_source else None,
+                                 metallic_const, roughness_const)
+    ms_path = library.save_derived("%s_MetallicSmoothness.png" % material_name, rgba, key)
 
     ao_path = occlusion_map
     if occlusion is not None and occlusion_map is None:
@@ -407,14 +371,13 @@ def classify_vectors(vectors, mapping):
 def build_fallback_material(record, values, state, mapping, library, config):
     """Материал на дефолтном URP/Lit — когда для мастера нет своего шейдера."""
     name = record["ue_path"].rsplit("/", 1)[-1]
-    pipeline = config.get("pipeline", "urp")
-    target = pipeline_slots(config)
+    target = SLOTS
     slots, packed = classify_textures(values["textures"], mapping, library)
     scalars = classify_scalars(values["scalars"], mapping)
     vectors = classify_vectors(values["vectors"], mapping)
 
     ms_map, ao_map, ao_generated = build_metallic_smoothness(
-        library, slots, packed, scalars, name, pipeline)
+        library, slots, packed, scalars, name)
 
     normal_map = slots.get("normal")
     if normal_map and config["textures"].get("flip_normal_green", True):
@@ -456,7 +419,7 @@ def build_fallback_material(record, values, state, mapping, library, config):
 
     return {
         "mode": "fallback",
-        "shader": "HDRP/Lit" if pipeline == "hdrp" else "Universal Render Pipeline/Lit",
+        "shader": "Universal Render Pipeline/Lit",
         "textures": textures,
         "floats": floats,
         "colors": colors,
@@ -620,8 +583,7 @@ def main():
     library = TextureLibrary(manifest, out_dir)
     mapping = config["material_mapping"]
 
-    unity = {"pipeline": config.get("pipeline", "urp"),
-             "textures": [], "meshes": [], "skeletal_meshes": [],
+    unity = {"textures": [], "meshes": [], "skeletal_meshes": [],
              "animations": [], "materials": [], "shaders": [], "levels": []}
     notes = []
 
@@ -871,7 +833,6 @@ def _named_color_list(colors):
 
 def to_unity_json(unity):
     return {
-        "pipeline": unity["pipeline"],
         "textures": [{
             "uePath": t.get("ue_path") or "",
             "file": t["file"],

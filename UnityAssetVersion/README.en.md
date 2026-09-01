@@ -6,7 +6,7 @@ This is a copy of the main tool. The **Python code and pipeline logic are identi
 
 ## Requirements
 
-- **Unity** 6000.x or 2022.3 LTS with URP or HDRP.
+- **Unity** 6000.x or 2022.3 LTS with **URP** (HDRP is not supported).
 - **Python 3** installed on the machine, with `numpy` and `Pillow`. The interpreter is not bundled — the system Python is used.
 - **Unreal Engine 5.8** — for the export step (the engine's native exporters are used).
 
@@ -36,11 +36,9 @@ Individual steps (Export / Shaders / Postprocess) and "Import only" are availabl
 - **Final assets** go to `Assets/UassetConverted/` (configurable).
 - **config.json** lives next to the scripts inside `Assets/UassetConverter/`. When you change settings in the window, Unity may briefly reimport that file — this is expected.
 
-## Shader Graph backend disabled
+## Shader output — HLSL only
 
-The primary shader output is **HLSL** (`.shader` for URP) and works out of the box. The second backend, which builds `.shadergraph` via the Shader Graph package API (`ShaderGraphBuilder.cs`), was written against the older API where `AbstractMaterialNode`/`GraphData`/`BlockNode` were `public`; Shader Graph 12+ (Unity 6000.x / 2022.3) made them `internal`, so that sub-assembly **does not compile** (`CS0122`). To keep the project error-free it is disabled: its asmdef carries a define-constraint `UASSET_SHADERGRAPH_BACKEND`, which is not present in the project.
-
-There is no impact on URP/HLSL: with no implementation registered, `ShaderGraphWriter` simply writes nothing (not an error). If you need Shader Graph output specifically (e.g. for HDRP), the backend must be fixed separately (rewritten against the public API, or to emit `.shadergraph` JSON directly), then re-enabled by adding `UASSET_SHADERGRAPH_BACKEND` to Project Settings → Player → Scripting Define Symbols.
+Materials are transpiled into ready HLSL `.shader` files for **URP**. Shader Graph output is **not supported** — its C# and Python parts have been removed entirely. A hand-written Lit shader for HDRP is impossible (its passes are pipeline-internal), so in an HDRP project materials get no shaders: this build targets URP/HLSL.
 
 ## UI language
 

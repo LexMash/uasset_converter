@@ -19,6 +19,10 @@
       "v": "нет .uproject по пути {path}"
     },
     {
+      "k": "cli.error.required_assets",
+      "v": "режиму «уровни» нужны эти типы ассетов, но они выключены: {types}. Включи их или добавь --allow-required-assets, чтобы запустить всё равно."
+    },
+    {
       "k": "cli.launching_unreal",
       "v": "Запускаю Unreal: {editor}"
     },
@@ -41,6 +45,46 @@
     {
       "k": "export.error_on",
       "v": "ОШИБКА на {path}: {error}"
+    },
+    {
+      "k": "export.level.skip.audio",
+      "v": "аудиокомпонент — звук не входит в задачу"
+    },
+    {
+      "k": "export.level.skip.camera",
+      "v": "компонент камеры — камеры в сцену не переносятся"
+    },
+    {
+      "k": "export.level.skip.decal",
+      "v": "компонент декали — декали в Unity отдельная механика"
+    },
+    {
+      "k": "export.level.skip.landscape",
+      "v": "компонент Landscape — ландшафт не конвертируется"
+    },
+    {
+      "k": "export.level.skip.load_failed",
+      "v": "уровень не удалось загрузить"
+    },
+    {
+      "k": "export.level.skip.niagara",
+      "v": "Компонент Niagara — системы частиц не конвертируются"
+    },
+    {
+      "k": "export.level.skip.particles",
+      "v": "каскадный компонент частиц — системы частиц не конвертируются"
+    },
+    {
+      "k": "export.level.skip.skylight",
+      "v": "SkyLight — прямого аналога нет, окружающий свет настраивается в Unity"
+    },
+    {
+      "k": "export.level_collected",
+      "v": "уровень {name}: {objects} объектов, {lights} источников света"
+    },
+    {
+      "k": "export.level_subset",
+      "v": "уровней: {levels}, ассетов к экспорту с зависимостями: {count}"
     },
     {
       "k": "export.queued",
@@ -163,6 +207,10 @@
       "v": "Папки для режима «Выбранные папки»"
     },
     {
+      "k": "gui.box.levels",
+      "v": "Уровни для режима «Уровни → Сцены»"
+    },
+    {
       "k": "gui.box.log",
       "v": "Ход работы"
     },
@@ -267,6 +315,22 @@
       "v": "Прежняя ссылка заменена: {previous}"
     },
     {
+      "k": "gui.levels.no_content",
+      "v": "папка Content не найдена"
+    },
+    {
+      "k": "gui.levels.none_selected",
+      "v": "уровни не выбраны"
+    },
+    {
+      "k": "gui.levels.reload",
+      "v": "Обновить уровни"
+    },
+    {
+      "k": "gui.levels.selected",
+      "v": "выбрано уровней: {count}"
+    },
+    {
       "k": "gui.option.avatar",
       "v": "Аватар для скелеток:"
     },
@@ -279,16 +343,12 @@
       "v": "Язык:"
     },
     {
-      "k": "gui.option.pipeline",
-      "v": "Рендер-пайплайн Unity:"
+      "k": "gui.option.light_multiplier",
+      "v": "Множитель яркости света ×"
     },
     {
       "k": "gui.option.scope",
       "v": "Объём конвертации:"
-    },
-    {
-      "k": "gui.option.shader_output",
-      "v": "Формат шейдеров:"
     },
     {
       "k": "gui.path.engine",
@@ -359,24 +419,16 @@
       "v": "Весь Content"
     },
     {
+      "k": "gui.scope.levels",
+      "v": "Уровни → Сцены"
+    },
+    {
       "k": "gui.scope.selected",
       "v": "Выбранные папки"
     },
     {
       "k": "gui.scope.test",
       "v": "Тестовая выборка"
-    },
-    {
-      "k": "gui.shader_output.both",
-      "v": "Оба формата"
-    },
-    {
-      "k": "gui.shader_output.hlsl",
-      "v": "Готовый HLSL-шейдер"
-    },
-    {
-      "k": "gui.shader_output.shadergraph",
-      "v": "Shader Graph"
     },
     {
       "k": "gui.status.aborted",
@@ -413,6 +465,34 @@
     {
       "k": "post.done",
       "v": "Готово."
+    },
+    {
+      "k": "post.level.file_missing",
+      "v": "файл уровня {file} указан в манифесте, но не найден на диске"
+    },
+    {
+      "k": "post.level.light_lumens",
+      "v": "интенсивность приблизительно пересчитана из люменов в канделы"
+    },
+    {
+      "k": "post.level.light_no_intensity",
+      "v": "у источника нет значения интенсивности, яркость оставлена нулевой"
+    },
+    {
+      "k": "post.level.light_note",
+      "v": "свет: {note}"
+    },
+    {
+      "k": "post.level.light_unit_unknown",
+      "v": "единица интенсивности не распознана, взято исходное число"
+    },
+    {
+      "k": "post.level.missing_ref",
+      "v": "ссылается на {kind}, который не экспортирован: {path}"
+    },
+    {
+      "k": "post.level.skipped_component",
+      "v": "компонент {component} не перенесён — {reason}"
     },
     {
       "k": "post.loop.matched_loop",
@@ -457,6 +537,10 @@
     {
       "k": "post.summary.animations",
       "v": "анимаций:           {count}"
+    },
+    {
+      "k": "post.summary.levels",
+      "v": "уровней:            {count}"
     },
     {
       "k": "post.summary.manifest",
@@ -567,6 +651,10 @@
       "v": "Анимации"
     },
     {
+      "k": "section.levels",
+      "v": "Уровни"
+    },
+    {
       "k": "section.materials",
       "v": "Материалы"
     },
@@ -597,10 +685,6 @@
     {
       "k": "shader.done",
       "v": "Готово: {written} шейдеров записано, {reused} переиспользовано, TODO: {todos}"
-    },
-    {
-      "k": "shader.hdrp_needs_shadergraph",
-      "v": "Выбран HDRP: рукописный Lit-шейдер этим пайплайном не поддерживается, поэтому пишется только вывод для Shader Graph. Импортируй его из окна в Unity."
     },
     {
       "k": "shader.header_todo",
@@ -661,6 +745,10 @@
     {
       "k": "summary.errors",
       "v": "ошибки"
+    },
+    {
+      "k": "summary.levels",
+      "v": "уровни"
     },
     {
       "k": "summary.material_functions",
@@ -815,14 +903,6 @@
       "v": "Что конвертировать"
     },
     {
-      "k": "unity.convert.shadergraph_none",
-      "v": "В output нет graph_ir.json — конвертер не сгенерировал IR. Поставь формат шейдеров Shader Graph или «Оба» и перезапусти шаг шейдеров."
-    },
-    {
-      "k": "unity.convert.shadergraph_written",
-      "v": "Файлов Shader Graph записано: {count}"
-    },
-    {
       "k": "unity.convert.starting_import",
       "v": "Конвертация закончена, запускаю импорт"
     },
@@ -947,6 +1027,82 @@
       "v": "Язык"
     },
     {
+      "k": "unity.level.built",
+      "v": "сцена {name} собрана: объектов {objects}, светов {lights}, пропущено {missing}"
+    },
+    {
+      "k": "unity.level.exists_body",
+      "v": "Сцена {path} уже существует. Перезаписать?"
+    },
+    {
+      "k": "unity.level.exists_title",
+      "v": "Сцена уже существует"
+    },
+    {
+      "k": "unity.level.file_missing",
+      "v": "файл уровня не найден: {path}"
+    },
+    {
+      "k": "unity.level.finished",
+      "v": "собрано сцен: {count}"
+    },
+    {
+      "k": "unity.level.header",
+      "v": "Сборка сцен Unity из уровней Unreal"
+    },
+    {
+      "k": "unity.level.hint",
+      "v": "Сначала импортируй меши и материалы через «Импорт» — этот шаг только расставляет уже импортированные ассеты по сценам."
+    },
+    {
+      "k": "unity.level.mesh_missing",
+      "v": "меша {mesh} нет в манифесте — объект пропущен в {level}"
+    },
+    {
+      "k": "unity.level.model_missing",
+      "v": "импортированная модель не найдена: {path} — объект пропущен в {level}"
+    },
+    {
+      "k": "unity.level.none",
+      "v": "в манифесте нет уровней"
+    },
+    {
+      "k": "unity.level.override_missing",
+      "v": "материал-переопределение {material} не найден в {level}"
+    },
+    {
+      "k": "unity.level.overwrite",
+      "v": "Перезаписать"
+    },
+    {
+      "k": "unity.level.run",
+      "v": "Собрать сцены"
+    },
+    {
+      "k": "unity.level.schema_mismatch",
+      "v": "уровень {name} пропущен: версия схемы {got}, ожидалась {want}"
+    },
+    {
+      "k": "unity.level.skip",
+      "v": "Пропустить"
+    },
+    {
+      "k": "unity.level.skipped",
+      "v": "уровень {name} пропущен (сцена не перезаписана)"
+    },
+    {
+      "k": "unity.level.step",
+      "v": "Сборка сцен…"
+    },
+    {
+      "k": "unity.level.unreadable",
+      "v": "не удалось прочитать уровень {name}: {error}"
+    },
+    {
+      "k": "unity.level.window_title",
+      "v": "Уровни Uasset"
+    },
+    {
       "k": "unity.log",
       "v": "Лог"
     },
@@ -965,14 +1121,6 @@
     {
       "k": "unity.model.no_importer",
       "v": "нет импортёра модели для {path}"
-    },
-    {
-      "k": "unity.shadergraph.failed",
-      "v": "Shader Graph {shader} не записан: {error}"
-    },
-    {
-      "k": "unity.shadergraph.package_missing",
-      "v": "Пакет Shader Graph не установлен, поэтому файлы .shadergraph не созданы. HLSL-шейдеры импортируются как обычно."
     },
     {
       "k": "unity.texture.no_importer",
@@ -1049,10 +1197,6 @@
     {
       "k": "verify.no_output_arg",
       "v": "не передан -uassetOutput"
-    },
-    {
-      "k": "verify.pipeline_from_manifest",
-      "v": "пайплайн из манифеста: {pipeline}"
     },
     {
       "k": "verify.render.failure",

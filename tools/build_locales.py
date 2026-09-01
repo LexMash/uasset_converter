@@ -75,12 +75,10 @@ STRINGS = {
 
     # -- GUI: настройки ------------------------------------------------------
     "gui.option.language": ("Language:", "Язык:"),
-    "gui.option.pipeline": ("Unity render pipeline:", "Рендер-пайплайн Unity:"),
     "gui.option.scope": ("Conversion scope:", "Объём конвертации:"),
     "gui.option.flip_normal": ("Flip the green channel of normal maps",
                                "Переворачивать зелёный канал нормалей"),
     "gui.option.avatar": ("Avatar for skeletal meshes:", "Аватар для скелеток:"),
-    "gui.option.shader_output": ("Shader output:", "Формат шейдеров:"),
 
     "gui.scope.test": ("Test subset", "Тестовая выборка"),
     "gui.scope.selected": ("Selected folders", "Выбранные папки"),
@@ -88,10 +86,6 @@ STRINGS = {
     "gui.scope.levels": ("Levels → Scenes", "Уровни → Сцены"),
 
     "gui.option.light_multiplier": ("Light intensity ×", "Множитель яркости света ×"),
-
-    "gui.shader_output.hlsl": ("HLSL shader file", "Готовый HLSL-шейдер"),
-    "gui.shader_output.shadergraph": ("Shader Graph", "Shader Graph"),
-    "gui.shader_output.both": ("Both", "Оба формата"),
 
     # -- GUI: папки ----------------------------------------------------------
     "gui.folders.reload": ("Refresh list", "Обновить список"),
@@ -290,11 +284,6 @@ STRINGS = {
     "shader.done": ("Done: {written} shaders written, {reused} reused, TODO: {todos}",
                     "Готово: {written} шейдеров записано, {reused} переиспользовано, TODO: {todos}"),
     "shader.index": ("Index: {path}", "Индекс: {path}"),
-    "shader.hdrp_needs_shadergraph": (
-        "HDRP is selected: a hand-written Lit shader is not supported by HDRP, "
-        "so only the Shader Graph output is produced. Import it from the Unity window.",
-        "Выбран HDRP: рукописный Lit-шейдер этим пайплайном не поддерживается, "
-        "поэтому пишется только вывод для Shader Graph. Импортируй его из окна в Unity."),
     "shader.unnamed": ("<unnamed>", "<без имени>"),
     "shader.helpers_header": ("Material functions carried over from Unreal",
                               "Перенесённые функции материалов Unreal"),
@@ -477,6 +466,47 @@ STRINGS = {
     "unity.import.source_missing": ("source file is missing: {path}",
                                     "нет исходного файла: {path}"),
 
+    # -- Unity: окно сборки сцен из уровней ----------------------------------
+    "unity.level.window_title": ("Uasset Levels", "Уровни Uasset"),
+    "unity.level.header": ("Build Unity scenes from Unreal levels",
+                           "Сборка сцен Unity из уровней Unreal"),
+    "unity.level.hint": (
+        "Import meshes and materials with “Import” first — this step only places "
+        "already-imported assets into scenes.",
+        "Сначала импортируй меши и материалы через «Импорт» — этот шаг только "
+        "расставляет уже импортированные ассеты по сценам."),
+    "unity.level.run": ("Build scenes", "Собрать сцены"),
+    "unity.level.step": ("Building scenes…", "Сборка сцен…"),
+    "unity.level.none": ("there are no levels in the manifest",
+                         "в манифесте нет уровней"),
+    "unity.level.file_missing": ("level file not found: {path}",
+                                 "файл уровня не найден: {path}"),
+    "unity.level.unreadable": ("could not read level {name}: {error}",
+                               "не удалось прочитать уровень {name}: {error}"),
+    "unity.level.schema_mismatch": (
+        "level {name} skipped: schema version {got}, expected {want}",
+        "уровень {name} пропущен: версия схемы {got}, ожидалась {want}"),
+    "unity.level.mesh_missing": (
+        "mesh {mesh} is not in the manifest — object skipped in {level}",
+        "меша {mesh} нет в манифесте — объект пропущен в {level}"),
+    "unity.level.model_missing": (
+        "imported model not found: {path} — object skipped in {level}",
+        "импортированная модель не найдена: {path} — объект пропущен в {level}"),
+    "unity.level.override_missing": (
+        "override material {material} not found in {level}",
+        "материал-переопределение {material} не найден в {level}"),
+    "unity.level.built": (
+        "scene {name} built: {objects} objects, {lights} lights, {missing} missing",
+        "сцена {name} собрана: объектов {objects}, светов {lights}, пропущено {missing}"),
+    "unity.level.finished": ("scenes built: {count}", "собрано сцен: {count}"),
+    "unity.level.exists_title": ("Scene already exists", "Сцена уже существует"),
+    "unity.level.exists_body": ("Scene {path} already exists. Overwrite it?",
+                                "Сцена {path} уже существует. Перезаписать?"),
+    "unity.level.overwrite": ("Overwrite", "Перезаписать"),
+    "unity.level.skip": ("Skip", "Пропустить"),
+    "unity.level.skipped": ("level {name} skipped (scene not overwritten)",
+                            "уровень {name} пропущен (сцена не перезаписана)"),
+
     # -- Unity: сообщения импортёров ----------------------------------------
     "unity.texture.no_importer": ("no texture importer for {path}",
                                   "нет импортёра текстуры для {path}"),
@@ -554,20 +584,6 @@ STRINGS = {
     "unity.convert.no_output_yet": (
         "The converter has not produced unity_manifest.json yet — run the conversion.",
         "Конвертер ещё не создал unity_manifest.json — запусти конвертацию."),
-    "unity.convert.shadergraph_written": ("Shader Graph files written: {count}",
-                                          "Файлов Shader Graph записано: {count}"),
-    "unity.shadergraph.package_missing": (
-        "The Shader Graph package is not installed, so .shadergraph files were "
-        "not generated. The HLSL shaders are imported as usual.",
-        "Пакет Shader Graph не установлен, поэтому файлы .shadergraph не созданы. "
-        "HLSL-шейдеры импортируются как обычно."),
-    "unity.shadergraph.failed": ("Shader Graph {shader} was not written: {error}",
-                                 "Shader Graph {shader} не записан: {error}"),
-    "unity.convert.shadergraph_none": (
-        "No graph_ir.json in the output — the converter did not generate an IR. "
-        "Set the shader output to Shader Graph or Both and run the shader step again.",
-        "В output нет graph_ir.json — конвертер не сгенерировал IR. Поставь формат "
-        "шейдеров Shader Graph или «Оба» и перезапусти шаг шейдеров."),
 
     # -- Пакетные проверки ---------------------------------------------------
     # Пояснительный текст локализуется, машинные маркеры — нет: строку
@@ -578,8 +594,6 @@ STRINGS = {
     "verify.no_manifest": ("no manifest at {path}", "нет манифеста {path}"),
     "verify.manifest_unreadable": ("manifest is unreadable: {error}",
                                    "манифест не читается: {error}"),
-    "verify.pipeline_from_manifest": ("pipeline from manifest: {pipeline}",
-                                      "пайплайн из манифеста: {pipeline}"),
     "verify.active_pipeline": ("active RenderPipeline: {pipeline}",
                                "активный RenderPipeline: {pipeline}"),
     "verify.textures_configured": ("textures configured: {count}",

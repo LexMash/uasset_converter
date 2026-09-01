@@ -6,7 +6,6 @@
     "output_dir": "../../UassetConverterOutput",
     "python": ""
   },
-  "pipeline": "urp",
   "export": {
     "textures": true,
     "static_meshes": true,
@@ -61,8 +60,7 @@
       "M_Dust_Particle": "Материал частиц; сами системы Niagara не конвертируются",
       "M_smoke_subUV": "Материал частиц (SubUV); сами системы Niagara не конвертируются",
       "M_Base_BasicUI": "UI-материал; в Unity другая система интерфейса"
-    },
-    "output": "hlsl"
+    }
   },
   "textures": {
     "format": "png",

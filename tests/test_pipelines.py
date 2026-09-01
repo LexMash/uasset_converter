@@ -1,16 +1,17 @@
 # -*- coding: utf-8 -*-
 """
-Различия пайплайнов в постобработке.
+Сборка карты масок в постобработке (URP).
 
-URP и HDRP держат одни и те же данные в разных картах и под разными именами,
-и перепутать их нельзя молча: материал соберётся, но будет выглядеть неверно.
+Unreal держит металличность, шероховатость и AO по отдельности или в своей
+упаковке; URP/Lit ждёт их в _MetallicGlossMap (RGB = metallic, A = smoothness)
+и отдельной _OcclusionMap — перепутать нельзя молча: материал соберётся, но
+будет выглядеть неверно.
 """
 import io
 import json
 import os
 
 import numpy as np
-import pytest
 from PIL import Image
 
 import postprocess
@@ -19,11 +20,10 @@ import postprocess
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
-def _config(out_dir, pipeline):
+def _config(out_dir):
     with io.open(os.path.join(ROOT, "config.default.json"), encoding="utf-8") as fh:
         config = json.load(fh)
     config["paths"]["output_dir"] = out_dir
-    config["pipeline"] = pipeline
     return config
 
 
@@ -53,10 +53,10 @@ SLOTS = {"metallic": "/Game/T_Metal", "roughness": "/Game/T_Rough",
          "occlusion": "/Game/T_AO"}
 
 
-def _mask(out_dir, pipeline):
+def _mask(out_dir):
     library = _library(out_dir)
     mask, ao, ao_generated = postprocess.build_metallic_smoothness(
-        library, dict(SLOTS), [], {}, "M_Test", pipeline)
+        library, dict(SLOTS), [], {}, "M_Test")
     assert mask, "маска не собрана"
     data = np.asarray(Image.open(os.path.join(out_dir, mask.replace("/", os.sep))))
     return data, ao, ao_generated
@@ -64,7 +64,7 @@ def _mask(out_dir, pipeline):
 
 def test_urp_mask_is_metallic_gloss(tmp_path):
     """URP/Lit ждёт металличность в RGB и гладкость в альфе."""
-    data, ao, _generated = _mask(str(tmp_path), "urp")
+    data, ao, _generated = _mask(str(tmp_path))
     red, green, blue, alpha = data[0, 0]
     assert red == green == blue, "в URP металличность лежит во всех трёх каналах"
     assert red > 250, "металличность из белой карты обязана остаться единицей"
@@ -73,27 +73,11 @@ def test_urp_mask_is_metallic_gloss(tmp_path):
     assert ao == "/Game/T_AO", "в URP окклюзия остаётся отдельной картой"
 
 
-def test_hdrp_mask_packs_occlusion(tmp_path):
-    """HDRP/Lit ждёт R=metallic, G=occlusion, A=smoothness в одной карте."""
-    data, ao, generated = _mask(str(tmp_path), "hdrp")
-    red, green, blue, alpha = data[0, 0]
-    assert red > 250, "металличность обязана лежать в красном канале"
-    assert 120 <= green <= 135, "окклюзия обязана уехать в зелёный канал"
-    assert blue == 0, "синий канал в HDRP — маска детализации, аналога у Unreal нет"
-    assert 185 <= alpha <= 195, "альфа обязана быть инверсией шероховатости"
-    # Отдельной картой окклюзия возвращаться не должна: слота под неё нет.
-    assert ao is None and generated is None
-
-
-@pytest.mark.parametrize("pipeline,expected", [
-    ("urp", "_MetallicGlossMap"),
-    ("hdrp", "_MaskMap"),
-])
-def test_fallback_material_slot_names(tmp_path, pipeline, expected):
-    """Имена слотов берутся из таблицы пайплайна, а не захардкожены под URP."""
+def test_fallback_material_slot_names(tmp_path):
+    """Карта масок садится в _MetallicGlossMap, материал — на URP/Lit."""
     out_dir = str(tmp_path)
     library = _library(out_dir)
-    config = _config(out_dir, pipeline)
+    config = _config(out_dir)
     values = {"textures": {"Metallic": "/Game/T_Metal", "Roughness": "/Game/T_Rough"},
               "scalars": {}, "vectors": {}, "switches": {}}
 
@@ -101,6 +85,5 @@ def test_fallback_material_slot_names(tmp_path, pipeline, expected):
         {"ue_path": "/Game/M_Test", "class": "Material"}, values,
         {"blend_mode": "BLEND_OPAQUE"}, config["material_mapping"], library, config)
 
-    assert expected in built["textures"]
-    assert built["shader"] == ("HDRP/Lit" if pipeline == "hdrp"
-                               else "Universal Render Pipeline/Lit")
+    assert "_MetallicGlossMap" in built["textures"]
+    assert built["shader"] == "Universal Render Pipeline/Lit"

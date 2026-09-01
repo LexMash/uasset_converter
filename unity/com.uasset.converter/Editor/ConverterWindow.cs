@@ -33,10 +33,6 @@ namespace UassetImporter
 
         static readonly string[] ScopeValues = { "test", "selected", "all" };
         static readonly string[] ScopeLabelKeys = { "gui.scope.test", "gui.scope.selected", "gui.scope.all" };
-        static readonly string[] PipelineValues = { "urp", "hdrp" };
-        static readonly string[] ShaderOutputValues = { "hlsl", "shadergraph", "both" };
-        static readonly string[] ShaderOutputLabelKeys =
-            { "gui.shader_output.hlsl", "gui.shader_output.shadergraph", "gui.shader_output.both" };
 
         string _converterDir = "";
         Dictionary<string, string> _config = new Dictionary<string, string>();
@@ -229,9 +225,6 @@ namespace UassetImporter
                 ConfigToggle(key, labelKey);
 
             ConfigPopup("scope.mode", "gui.option.scope", ScopeValues, ScopeLabelKeys);
-            ConfigPopup("pipeline", "gui.option.pipeline", PipelineValues, PipelineValues);
-            ConfigPopup("shader_gen.output", "gui.option.shader_output",
-                        ShaderOutputValues, ShaderOutputLabelKeys);
             ConfigToggle("textures.flip_normal_green", "gui.option.flip_normal");
             EditorGUILayout.Space();
         }
@@ -557,10 +550,6 @@ namespace UassetImporter
                 Append(Loc.T("unity.convert.no_output_yet"));
                 return;
             }
-
-            var written = ShaderGraphWriter.WriteAll(outputDir, Config("pipeline"), Append);
-            if (written > 0)
-                Append(Loc.T("unity.convert.shadergraph_written", "count", written));
 
             UassetImportWindow.Import(manifestPath, outputDir,
                                       Config("unity.target_root"),

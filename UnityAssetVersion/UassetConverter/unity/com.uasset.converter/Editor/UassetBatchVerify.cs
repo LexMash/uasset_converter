@@ -65,7 +65,6 @@ namespace UassetImporter
                 return;
             }
 
-            Say(Loc.T("verify.pipeline_from_manifest", "pipeline", manifest.pipeline));
             Say(Loc.T("verify.active_pipeline", "pipeline",
                       GraphicsSettings.currentRenderPipeline != null
                           ? GraphicsSettings.currentRenderPipeline.GetType().Name

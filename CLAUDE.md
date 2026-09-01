@@ -10,7 +10,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-An Unreal Engine → Unity asset converter. It exports art (textures, meshes, animations, materials) from a **source** Unreal project and imports it into Unity. The distinguishing feature: Unreal master materials are **transpiled into real Unity shaders** (HLSL or Shader Graph), not approximated by hand-tuned values.
+An Unreal Engine → Unity asset converter. It exports art (textures, meshes, animations, materials) from a **source** Unreal project and imports it into Unity. The distinguishing feature: Unreal master materials are **transpiled into real Unity HLSL shaders**, not approximated by hand-tuned values. The target pipeline is **URP** (HDRP is not supported).
 
 The codebase is bilingual, Russian-first: docstrings and comments are in Russian, user-facing strings are localized (see i18n below). `README.md` is Russian, `README.en.md` is the English translation. Match the surrounding language when editing comments.
 
@@ -49,14 +49,18 @@ Unreal ──► convert.py (3 steps) ──► output/ ──► Unity importer
 - **Layer 2 — shader transpiler**, split so it can emit two formats from one traversal:
   - [graph_ir.py](graph_ir.py) — traverses the Unreal material graph into a small (~30-op) neutral IR. Unknown nodes are never invented: they become a TODO plus a passthrough of the first input.
   - [backend_hlsl.py](backend_hlsl.py) — renders IR → `.shader` text, using [shader_template.py](shader_template.py) (a hand-written, self-contained URP template that does not `#include` LitInput.hlsl, so it survives URP package updates).
-  - [shader_gen.py](shader_gen.py) — orchestration only: reads the manifest, de-dupes identical graphs by structural signature, writes `Shaders/*.shader`, `shaders.json`, and always writes `graph_ir.json` (the neutral form Unity uses to build a `.shadergraph`).
+  - [shader_gen.py](shader_gen.py) — orchestration only: reads the manifest, de-dupes identical graphs by structural signature, writes `Shaders/*.shader` and `shaders.json`.
 - **Layer 3 — [postprocess.py](postprocess.py)** — turns the raw Unreal manifest into a Unity-terms manifest so the C# side never has to guess. Resolves material-instance parameter chains to the master, picks transpiled-shader vs. URP/Lit fallback, repacks mask channels (Unreal roughness → Unity smoothness), flips the normal green channel, and applies the animation-loop heuristic. Produces `unity_manifest.json` and `unsupported.md`.
 
 `convert.py` also exposes machine commands (`--config-dump`, `--config-set`, `--scan-folders`, `--list-languages`, `--porcelain`) so the Unity window can drive the pipeline without parsing `config.json` in C#.
 
 ### Unity side (`unity/com.uasset.converter/Editor/`)
 
-C# editor package, menu **Tools → Uasset Converter**. `ProcessRunner.cs` runs `convert.py --porcelain` as a background process (never `WaitForExit` — exports take tens of minutes) and reads stdout on worker threads, parsing it in `EditorApplication.update`. It then reads `output/unity_manifest.json` and `graph_ir.json` to create Unity assets. The `RenderCheck` sample (URP-only) renders a scene of converted meshes to PNG for visual verification.
+C# editor package, menu **Tools → Uasset Converter**. `ProcessRunner.cs` runs `convert.py --porcelain` as a background process (never `WaitForExit` — exports take tens of minutes) and reads stdout on worker threads, parsing it in `EditorApplication.update`. It then reads `output/unity_manifest.json` to create Unity assets. The `RenderCheck` sample (URP-only) renders a scene of converted meshes to PNG for visual verification.
+
+**Level → Scene** is a **separate step**, not part of the main Import: menu **Tools → Uasset Converter → Import Levels** ([LevelImportWindow.cs](unity/com.uasset.converter/Editor/LevelImportWindow.cs)). It is deliberately not folded into Import because building a scene replaces editor content — the user triggers it explicitly, after meshes/materials are already imported. [SceneBuilder.cs](unity/com.uasset.converter/Editor/SceneBuilder.cs) reads each `output/Levels/*.json` (schema written by [level_export.py](level_export.py), `schemaVersion` checked), builds **one `.unity` scene per level** in an *additive* temp scene so the user's working scene is untouched, saves it to `<targetRoot>/Scenes/<UE-rel>/<Name>.unity`, then closes it (prompts before overwriting an existing generated scene). Meshes are placed as **prefab instances** of the imported models (`PrefabUtility.InstantiatePrefab`), with material overrides applied per-instance via `MaterialBuilder.LoadExisting`. Lights map Unreal → `UnityEngine.Light`. The level-JSON models (`LevelEntry`/`LevelFile`/`LevelActor`/`LevelObject`/`LevelLight`/`LevelTransform`/`MaterialOverride`) live in [UassetManifest.cs](unity/com.uasset.converter/Editor/UassetManifest.cs).
+
+**Coordinate conversion is C#'s job alone** ([level_export.py](level_export.py) stores raw UE transforms — cm + UE-axis quaternion — precisely so the axis/metric conversion lives in exactly one place and can't desync). The formula (from `LEVEL_TO_SCENE_PLAN.md` §5, implemented in `SceneBuilder.UeToUnity*`): position `= (UE.Y, UE.Z, UE.X) / 100`, scale `= (UE.Y, UE.Z, UE.X)`, rotation quat `= (qy, qz, qx, qw)` — a cyclic axis permutation with no sign flips (basis matrix has det +1, both spaces left-handed; equivalent to the plan's `C·R·C⁻¹`). **These quaternion signs have not yet been visually verified in Unity** — if generated scenes come out mirrored or rotated, `SceneBuilder.UeToUnity*` is the single place to fix it; check with the `RenderCheck` sample.
 
 ## Cross-cutting conventions
 
@@ -73,4 +77,4 @@ C# editor package, menu **Tools → Uasset Converter**. `ProcessRunner.cs` runs 
 
 ## Environment expectations
 
-Unreal Engine 5.8 (native exporters, so `.uasset` is never parsed), Python 3.13 (`tkinter` is stdlib), Unity 6000.x or 2022.3 LTS with URP or HDRP. **HDRP cannot use the HLSL output** — its passes are pipeline-internal, so `shader_gen.py` forces Shader Graph output (via IR) for HDRP.
+Unreal Engine 5.8 (native exporters, so `.uasset` is never parsed), Python 3.13 (`tkinter` is stdlib), Unity 6000.x or 2022.3 LTS with **URP**. HDRP is not supported: its Lit passes are pipeline-internal and cannot be reproduced by a hand-written HLSL shader, so the converter targets URP only.

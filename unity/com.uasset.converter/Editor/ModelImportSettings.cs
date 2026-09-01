@@ -89,6 +89,11 @@ namespace UassetImporter
             // импортёр по единицам, записанным в FBX — своим множителем сверху
             // это только сломать.
             importer.useFileScale = true;
+            // Модели в Unreal НЕ повёрнуты — разворот на ±90° вносит сам импортёр
+            // FBX (оси Z-up -> Y-up). Запекаем эту конвертацию в вершины: меш
+            // приезжает верно ориентированным при identity, и размещение уровня
+            // не требует доводки поворотом (та ломала пивоты и давала смещения).
+            importer.bakeAxisConversion = true;
             importer.importBlendShapes = animated;
             importer.importAnimation = animated;
             importer.weldVertices = true;

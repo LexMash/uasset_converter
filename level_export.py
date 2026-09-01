@@ -40,6 +40,17 @@ MOBILITY_TO_LIGHTMAP = {
     "Movable": "Realtime",
 }
 
+# Приблизительный перевод физической силы света (кандела) Unreal в условную
+# интенсивность встроенной Unity-лампы. У URP/встроенного Light нет авто-
+# экспозиции, поэтому сырые канделы Unreal (тысячи–сотни тысяч) выбеливают весь
+# кадр. Коэффициент подобран так, чтобы типичная лампа сцены попадала в район
+# 1–5; тонкую настройку оставляем за unity.light_intensity_multiplier. Значения
+# ошибкоёмки — сверять визуально (RenderCheck) и при нужде править здесь/множителем.
+CANDELA_TO_UNITY_INTENSITY = 0.001
+# Потолок, чтобы самые яркие источники (десятки–сотни тысяч кандел) не выжигали
+# сцену целиком при отсутствии экспозиции.
+UNITY_INTENSITY_CLAMP = 25.0
+
 
 # ----------------------------------------------------------------------------
 # Мелкие преобразования величин
@@ -90,10 +101,10 @@ def convert_light_intensity(unity_type, intensity, unit, multiplier=1.0,
 
     Логика зависит от типа и единиц:
       * направленный свет UE задаётся в люксах и берётся Unity напрямую;
-      * люмены переводятся в канделы по телесному углу (полная сфера для
-        точечного/площадного, конус — для прожектора);
-      * канделы берутся как есть;
-      * unitless / EV / неизвестное — исходное число без пересчёта.
+      * остальные типы приводятся к канделам (люмены — по телесному углу: полная
+        сфера для точечного/площадного, конус — для прожектора; канделы и
+        unitless — как есть), затем к условной интенсивности Unity через
+        CANDELA_TO_UNITY_INTENSITY с потолком UNITY_INTENSITY_CLAMP.
     Общий множитель unity.light_intensity_multiplier применяется поверх всегда.
     """
     if intensity is None:
@@ -101,9 +112,13 @@ def convert_light_intensity(unity_type, intensity, unit, multiplier=1.0,
 
     unit_l = (unit or "").strip().lower()
 
+    # Направленный свет UE в люксах близок к интенсивности Unity — берём напрямую,
+    # candela-масштаб к нему не применяем.
     if unity_type == "Directional":
         return intensity * multiplier, None
 
+    # Прочие типы: сначала приводим к канделам.
+    note = None
     if unit_l == "lumens":
         if unity_type == "Spot" and outer_cone_deg:
             half = math.radians(min(max(float(outer_cone_deg), 0.0), 180.0))
@@ -112,16 +127,21 @@ def convert_light_intensity(unity_type, intensity, unit, multiplier=1.0,
         else:
             # Точечный и площадной — по полной сфере.
             candela = intensity / (4.0 * math.pi)
-        return candela * multiplier, "post.level.light_lumens"
+        note = "post.level.light_lumens"
+    elif unit_l == "candelas":
+        candela = intensity
+    elif unit_l in ("", "unitless"):
+        candela = intensity
+    else:
+        # EV или незнакомая единица: честно берём число как есть и предупреждаем.
+        candela = intensity
+        note = "post.level.light_unit_unknown"
 
-    if unit_l == "candelas":
-        return intensity * multiplier, None
-
-    if unit_l in ("", "unitless"):
-        return intensity * multiplier, None
-
-    # EV или незнакомая единица: честно берём число как есть и предупреждаем.
-    return intensity * multiplier, "post.level.light_unit_unknown"
+    # Канделы -> условная интенсивность Unity, с потолком против выбеливания.
+    value = candela * CANDELA_TO_UNITY_INTENSITY * multiplier
+    if value > UNITY_INTENSITY_CLAMP:
+        value = UNITY_INTENSITY_CLAMP
+    return value, note
 
 
 def build_light(raw, multiplier=1.0):

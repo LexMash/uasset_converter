@@ -38,12 +38,6 @@ SCOPE_ITEMS = [
     ("levels", "gui.scope.levels"),
 ]
 
-SHADER_OUTPUT_ITEMS = [
-    ("hlsl", "gui.shader_output.hlsl"),
-    ("shadergraph", "gui.shader_output.shadergraph"),
-    ("both", "gui.shader_output.both"),
-]
-
 
 class ConverterApp:
     def __init__(self, root, config):
@@ -63,11 +57,9 @@ class ConverterApp:
         self.engine_var = tk.StringVar(
             value=config["paths"].get("ue_engine_dir") or convert.find_engine_dir(config) or "")
         self.output_var = tk.StringVar(value=config["paths"]["output_dir"])
-        self.pipeline_var = tk.StringVar(value=config.get("pipeline", "urp"))
         self.scope_var = tk.StringVar(value=config["scope"].get("mode", "test"))
         self.flip_var = tk.BooleanVar(value=config["textures"].get("flip_normal_green", True))
         self.avatar_var = tk.StringVar(value=config["unity"].get("avatar_type", "Generic"))
-        self.shader_output_var = tk.StringVar(value=config["shader_gen"].get("output", "hlsl"))
         self.light_mult_var = tk.StringVar(
             value=str(config.get("unity", {}).get("light_intensity_multiplier", 1.0)))
         self.export_vars = {
@@ -173,24 +165,10 @@ class ConverterApp:
         box = ttk.LabelFrame(parent, text=t("gui.box.options"), padding=8)
         box.pack(side="left", fill="both", expand=True, padx=(8, 0))
 
-        ttk.Label(box, text=t("gui.option.pipeline")).pack(anchor="w")
-        row = ttk.Frame(box)
-        row.pack(anchor="w", pady=(0, 6))
-        for value, label in (("urp", "URP"), ("hdrp", "HDRP")):
-            ttk.Radiobutton(row, text=label, value=value,
-                            variable=self.pipeline_var).pack(side="left", padx=(0, 12))
-
         ttk.Label(box, text=t("gui.option.scope")).pack(anchor="w")
         for value, label_key in SCOPE_ITEMS:
             ttk.Radiobutton(box, text=t(label_key), value=value, variable=self.scope_var,
                             command=self._sync_tree_state).pack(anchor="w")
-
-        ttk.Separator(box).pack(fill="x", pady=6)
-
-        ttk.Label(box, text=t("gui.option.shader_output")).pack(anchor="w")
-        for value, label_key in SHADER_OUTPUT_ITEMS:
-            ttk.Radiobutton(box, text=t(label_key), value=value,
-                            variable=self.shader_output_var).pack(anchor="w")
 
         ttk.Separator(box).pack(fill="x", pady=6)
         ttk.Checkbutton(box, text=t("gui.option.flip_normal"),
@@ -453,10 +431,8 @@ class ConverterApp:
         self.config["paths"]["ue_project"] = self.project_var.get()
         self.config["paths"]["ue_engine_dir"] = self.engine_var.get()
         self.config["paths"]["output_dir"] = self.output_var.get()
-        self.config["pipeline"] = self.pipeline_var.get()
         self.config["scope"]["mode"] = self.scope_var.get()
-        if self.selected_folders:
-            self.config["scope"]["include_paths"] = sorted(self.selected_folders)
+        self.config["scope"]["include_paths"] = sorted(self.selected_folders)
         self.config["scope"]["level_paths"] = sorted(self.selected_levels)
         self.config["textures"]["flip_normal_green"] = self.flip_var.get()
         self.config["unity"]["avatar_type"] = self.avatar_var.get()
@@ -465,7 +441,6 @@ class ConverterApp:
         except (TypeError, ValueError):
             # Пользователь мог опечататься — оставляем прежнее значение конфига.
             pass
-        self.config["shader_gen"]["output"] = self.shader_output_var.get()
         for key, variable in self.export_vars.items():
             self.config["export"][key] = variable.get()
         convert.save_config(self.config)

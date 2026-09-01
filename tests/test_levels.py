@@ -69,8 +69,8 @@ def test_directional_intensity_is_lux_passthrough():
 
 def test_lumens_to_candela_point_full_sphere():
     value, note = lx.convert_light_intensity("Point", 1256.6370614, "Lumens")
-    # 1256.637 / (4*pi) ~= 100 кандел.
-    assert value == pytest.approx(100.0, rel=1e-4)
+    # 1256.637 / (4*pi) ~= 100 кандел -> * CANDELA_TO_UNITY_INTENSITY.
+    assert value == pytest.approx(100.0 * lx.CANDELA_TO_UNITY_INTENSITY, rel=1e-4)
     assert note == "post.level.light_lumens"
 
 
@@ -80,24 +80,32 @@ def test_lumens_to_candela_spot_uses_cone_solid_angle():
     value, _ = lx.convert_light_intensity("Spot", 1000.0, "Lumens", outer_cone_deg=outer)
     half = math.radians(outer)
     solid = 2.0 * math.pi * (1.0 - math.cos(half))
-    assert value == pytest.approx(1000.0 / solid)
+    assert value == pytest.approx((1000.0 / solid) * lx.CANDELA_TO_UNITY_INTENSITY)
 
 
-def test_candelas_passthrough():
+def test_candelas_scaled_to_unity():
     value, note = lx.convert_light_intensity("Point", 850.0, "Candelas")
-    assert value == 850.0
+    assert value == pytest.approx(850.0 * lx.CANDELA_TO_UNITY_INTENSITY)
     assert note is None
 
 
 def test_unknown_unit_passes_through_with_note():
     value, note = lx.convert_light_intensity("Point", 5.0, "EV")
-    assert value == 5.0
+    assert value == pytest.approx(5.0 * lx.CANDELA_TO_UNITY_INTENSITY)
     assert note == "post.level.light_unit_unknown"
+
+
+def test_unitless_large_intensity_is_not_blown_out():
+    # Регресс на выбеливание: сырые unitless-канделы (сотни тысяч) должны
+    # сжиматься до потолка, а не уходить в кадр как есть.
+    value, note = lx.convert_light_intensity("Point", 100000.0, "UNITLESS")
+    assert value == pytest.approx(lx.UNITY_INTENSITY_CLAMP)
+    assert note is None
 
 
 def test_multiplier_applies():
     value, _ = lx.convert_light_intensity("Point", 100.0, "Candelas", multiplier=2.5)
-    assert value == 250.0
+    assert value == pytest.approx(100.0 * lx.CANDELA_TO_UNITY_INTENSITY * 2.5)
 
 
 def test_missing_intensity_reports_note():
@@ -129,7 +137,7 @@ def test_build_light_point():
     light = lx.build_light(_light_raw())
     assert light["unityType"] == "Point"
     assert light["range"] == 5.0                 # 500 см -> 5 м
-    assert light["unityIntensity"] == 100.0
+    assert light["unityIntensity"] == pytest.approx(100.0 * lx.CANDELA_TO_UNITY_INTENSITY)
     assert light["lightmapMode"] == "Realtime"   # Movable
     assert light["color"] == [1.0, 0.9, 0.8]
 

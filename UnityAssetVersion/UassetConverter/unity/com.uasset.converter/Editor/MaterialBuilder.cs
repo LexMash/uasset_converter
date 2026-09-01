@@ -32,7 +32,7 @@ namespace UassetImporter
                 {
                     // Свой шейдер мог не скомпилироваться — тогда честнее взять
                     // Lit, чем оставить розовый материал без объяснений.
-                    var fallbackName = FallbackShaderName(manifest.pipeline);
+                    var fallbackName = FallbackShaderName();
                     shader = Shader.Find(fallbackName);
                     if (shader == null)
                     {
@@ -58,7 +58,7 @@ namespace UassetImporter
                 }
 
                 ApplyValues(material, entry, manifest, targetRoot, log);
-                ApplyRenderState(material, entry, manifest.pipeline);
+                ApplyRenderState(material, entry);
 
                 EditorUtility.SetDirty(material);
                 result[entry.uePath] = material;
@@ -67,6 +67,27 @@ namespace UassetImporter
                 else fallbackMode++;
             }
 
+            return result;
+        }
+
+        /// <summary>
+        /// Загружает уже созданные материалы по манифесту, ничего не пересоздавая.
+        /// Нужно шагам, которым материалы требуются готовыми (сборка сцены), но
+        /// которые не должны запускать полный Build с его побочными эффектами.
+        /// Отсутствующий на диске материал просто не попадает в словарь.
+        /// </summary>
+        public static Dictionary<string, Material> LoadExisting(
+            UassetManifest manifest, string targetRoot)
+        {
+            var result = new Dictionary<string, Material>();
+            var materialsRoot = $"{targetRoot}/Materials";
+            foreach (var entry in manifest.materials)
+            {
+                var assetPath = $"{materialsRoot}/{ShortName(entry.uePath)}.mat";
+                var material = AssetDatabase.LoadAssetAtPath<Material>(assetPath);
+                if (material != null)
+                    result[entry.uePath] = material;
+            }
             return result;
         }
 
@@ -132,7 +153,7 @@ namespace UassetImporter
             return null;
         }
 
-        static void ApplyRenderState(Material material, MaterialEntry entry, string pipeline)
+        static void ApplyRenderState(Material material, MaterialEntry entry)
         {
             if (material.HasProperty("_Cull"))
                 material.SetFloat("_Cull", entry.twoSided ? (float)UnityEngine.Rendering.CullMode.Off : (float)UnityEngine.Rendering.CullMode.Back);
@@ -143,7 +164,6 @@ namespace UassetImporter
 
             // Свой шейдер уже несёт нужные Blend/ZWrite прямо в ShaderLab —
             // трогать его настройки поверх не нужно и вредно.
-            // Shader Graph тоже настраивает себя сам, из настроек Target.
             if (entry.mode == "shader")
                 return;
 
@@ -152,93 +172,13 @@ namespace UassetImporter
                               entry.blendMode == "BLEND_ADDITIVE" ||
                               entry.blendMode == "BLEND_MODULATE";
 
-            if (pipeline == "hdrp")
-                SetupHdrpSurface(material, alphaClip, transparent, entry);
-            else if (alphaClip)
+            if (alphaClip)
                 SetupUrpSurface(material, opaque: true, alphaClip: true, queue: 2450);
             else if (transparent)
                 SetupUrpSurface(material, opaque: false, alphaClip: false, queue: 3000);
             else
                 SetupUrpSurface(material, opaque: true, alphaClip: false, queue: 2000);
         }
-
-        /// <summary>
-        /// Настройка поверхности у HDRP/Lit.
-        ///
-        /// Свойства называются иначе, чем в URP, а главное — HDRP пересобирает
-        /// ключевые слова и очередь материала не сама, а в ValidateMaterial.
-        /// Без этого вызова материал остаётся с настройками по умолчанию, как
-        /// бы аккуратно ни были проставлены свойства.
-        /// </summary>
-        static void SetupHdrpSurface(Material material, bool alphaClip, bool transparent,
-                                     MaterialEntry entry)
-        {
-            if (material.HasProperty("_SurfaceType"))
-                material.SetFloat("_SurfaceType", transparent ? 1f : 0f);
-            if (material.HasProperty("_AlphaCutoffEnable"))
-                material.SetFloat("_AlphaCutoffEnable", alphaClip ? 1f : 0f);
-            if (material.HasProperty("_AlphaCutoff"))
-                material.SetFloat("_AlphaCutoff", entry.alphaCutoff);
-            if (material.HasProperty("_DoubleSidedEnable"))
-                material.SetFloat("_DoubleSidedEnable", entry.twoSided ? 1f : 0f);
-
-            if (transparent)
-            {
-                if (material.HasProperty("_RenderQueueType"))
-                    material.SetFloat("_RenderQueueType", 5f);   // Transparent
-                if (material.HasProperty("_BlendMode"))
-                    material.SetFloat("_BlendMode", entry.blendMode == "BLEND_ADDITIVE" ? 1f : 0f);
-                if (material.HasProperty("_ZWrite"))
-                    material.SetFloat("_ZWrite", 0f);
-            }
-            else if (material.HasProperty("_RenderQueueType"))
-            {
-                material.SetFloat("_RenderQueueType", alphaClip ? 1f : 0f);
-            }
-
-            if (alphaClip) material.EnableKeyword("_ALPHATEST_ON");
-            else material.DisableKeyword("_ALPHATEST_ON");
-
-            ValidateHdrpMaterial(material);
-        }
-
-        /// <summary>
-        /// HDMaterial.ValidateMaterial через рефлексию.
-        ///
-        /// Прямая ссылка на сборку HDRP сделала бы импортёр несобираемым в
-        /// URP-проектах, а он обязан работать в обоих. Пакета нет — значит и
-        /// материал на HDRP/Lit взяться было неоткуда, и звать нечего.
-        /// </summary>
-        static void ValidateHdrpMaterial(Material material)
-        {
-            if (_hdrpValidate == null && !_hdrpValidateSearched)
-            {
-                _hdrpValidateSearched = true;
-                foreach (var assembly in System.AppDomain.CurrentDomain.GetAssemblies())
-                {
-                    var type = assembly.GetType("UnityEngine.Rendering.HighDefinition.HDMaterial");
-                    if (type == null) continue;
-                    _hdrpValidate = type.GetMethod("ValidateMaterial",
-                        System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static,
-                        null, new[] { typeof(Material) }, null);
-                    if (_hdrpValidate != null) break;
-                }
-            }
-
-            try
-            {
-                _hdrpValidate?.Invoke(null, new object[] { material });
-            }
-            catch (System.Exception)
-            {
-                // Версия HDRP с другой сигнатурой. Материал останется с тем,
-                // что мы проставили сами: хуже, чем после валидации, но лучше,
-                // чем прерванный импорт.
-            }
-        }
-
-        static System.Reflection.MethodInfo _hdrpValidate;
-        static bool _hdrpValidateSearched;
 
         /// <summary>
         /// Переключение Surface Type у URP/Lit — это не одно свойство, а связка
@@ -276,9 +216,9 @@ namespace UassetImporter
             material.renderQueue = queue;
         }
 
-        public static string FallbackShaderName(string pipeline)
+        public static string FallbackShaderName()
         {
-            return pipeline == "hdrp" ? "HDRP/Lit" : "Universal Render Pipeline/Lit";
+            return "Universal Render Pipeline/Lit";
         }
 
         public static string ShortName(string uePath)

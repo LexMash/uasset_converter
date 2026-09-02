@@ -98,6 +98,8 @@ Shader "UassetConverted/uv_and_panner"
             #pragma multi_compile_fragment _ _SCREEN_SPACE_OCCLUSION
             #pragma multi_compile _ LIGHTMAP_ON
             #pragma multi_compile _ DIRLIGHTMAP_COMBINED
+            #pragma multi_compile _ LIGHTMAP_SHADOW_MIXING
+            #pragma multi_compile _ SHADOWS_SHADOWMASK
             #pragma multi_compile_fog
             #pragma multi_compile_instancing
 
@@ -353,6 +355,86 @@ Shader "UassetConverted/uv_and_panner"
                 SurfaceValues surface = EvaluateSurface(surfaceInputs);
 
                 return 0;
+            }
+            ENDHLSL
+        }
+
+        Pass
+        {
+            Name "Meta"
+            Tags { "LightMode" = "Meta" }
+            Cull Off
+
+            HLSLPROGRAM
+            #pragma vertex MetaPassVertex
+            #pragma fragment MetaPassFragment
+            #pragma target 3.0
+
+            #pragma multi_compile_fragment _ EDITOR_VISUALIZATION
+
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/MetaInput.hlsl"
+
+            struct MetaAttributes
+            {
+                float4 positionOS : POSITION;
+                float3 normalOS   : NORMAL;
+                float2 uv0        : TEXCOORD0;
+                float2 uv1        : TEXCOORD1;
+                float2 uv2        : TEXCOORD2;
+                float2 uv3        : TEXCOORD3;
+                float4 color      : COLOR;
+            };
+
+            struct MetaVaryings
+            {
+                float4 positionCS : SV_POSITION;
+                float2 uv0         : TEXCOORD3;
+                float2 uv1         : TEXCOORD4;
+                float2 uv2         : TEXCOORD5;
+                float2 uv3         : TEXCOORD6;
+                float4 color      : COLOR;
+                float3 positionWS : TEXCOORD10;
+                float3 normalWS   : TEXCOORD11;
+            #ifdef EDITOR_VISUALIZATION
+                float2 vizUV      : TEXCOORD12;
+                float4 lightCoord : TEXCOORD13;
+            #endif
+            };
+
+            MetaVaryings MetaPassVertex(MetaAttributes input)
+            {
+                MetaVaryings output = (MetaVaryings)0;
+                output.positionCS = UnityMetaVertexPosition(input.positionOS.xyz, input.uv1, input.uv2, unity_LightmapST, unity_DynamicLightmapST);
+                output.uv0 = input.uv0;
+                output.uv1 = input.uv1;
+                output.uv2 = input.uv2;
+                output.uv3 = input.uv3;
+                output.color = input.color;
+                output.positionWS = TransformObjectToWorld(input.positionOS.xyz);
+                output.normalWS = TransformObjectToWorldNormal(input.normalOS);
+            #ifdef EDITOR_VISUALIZATION
+                UnityEditorVizData(input.positionOS.xyz, input.uv0, input.uv1, input.uv2, output.vizUV, output.lightCoord);
+            #endif
+                return output;
+            }
+
+            half4 MetaPassFragment(MetaVaryings input) : SV_Target
+            {
+                SurfaceInputs surfaceInputs = (SurfaceInputs)0;
+                surfaceInputs.uv0 = input.uv0;
+                surfaceInputs.uv1 = input.uv1;
+                surfaceInputs.uv2 = input.uv2;
+                surfaceInputs.uv3 = input.uv3;
+                SurfaceValues surface = EvaluateSurface(surfaceInputs);
+
+                MetaInput metaInput = (MetaInput)0;
+                metaInput.Albedo     = surface.albedo;
+                metaInput.Emission   = surface.emission;
+            #ifdef EDITOR_VISUALIZATION
+                metaInput.VizUV      = input.vizUV;
+                metaInput.LightCoord = input.lightCoord;
+            #endif
+                return UnityMetaFragment(metaInput);
             }
             ENDHLSL
         }

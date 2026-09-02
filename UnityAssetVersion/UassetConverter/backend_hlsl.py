@@ -307,6 +307,38 @@ def uv_blocks(ir):
             "\n".join(transfer), "\n".join(fill), count)
 
 
+def lightmap_blocks(ir):
+    """Развязка лайтмапного UV от материального.
+
+    Статический лайтмап в Unity всегда лежит в меш-канале 1 (TEXCOORD1),
+    динамический — в канале 2 (TEXCOORD2). Если материал уже занял эти каналы
+    своими UV-наборами (uvN : TEXCOORDN), переиспользуем их; иначе объявляем
+    выделенное поле. Иначе OUTPUT_LIGHTMAP_UV/Meta ссылались бы на несуществующее
+    поле, и вариант LIGHTMAP_ON не компилировался бы (отсюда была магента).
+
+    Возвращает:
+      fwd_attribute  — доп. поле лайтмапа для Attributes прохода ForwardLit;
+      static_src     — выражение статического лайтмап-UV (канал 1);
+      dynamic_src    — выражение динамического лайтмап-UV (канал 2);
+      meta_attribute — доп. поля лайтмапа для Attributes прохода Meta.
+    """
+    has_uv1 = ir.max_uv >= 1
+    has_uv2 = ir.max_uv >= 2
+    static_src = "input.uv1" if has_uv1 else "input.staticLightmapUV"
+    dynamic_src = "input.uv2" if has_uv2 else "input.dynamicLightmapUV"
+
+    fwd_attribute = "" if has_uv1 else "                float2 staticLightmapUV : TEXCOORD1;\n"
+
+    meta_lines = []
+    if not has_uv1:
+        meta_lines.append("                float2 staticLightmapUV : TEXCOORD1;")
+    if not has_uv2:
+        meta_lines.append("                float2 dynamicLightmapUV : TEXCOORD2;")
+    meta_attribute = "".join(line + "\n" for line in meta_lines)
+
+    return fwd_attribute, static_src, dynamic_src, meta_attribute
+
+
 def surface_inputs_block(ir, uv_count):
     lines = ["            float2 uv%d;" % index for index in range(uv_count)]
     for field in sorted(ir.builtins):
@@ -378,6 +410,7 @@ def generate(ir, shader_name):
         todo_header = "\n// %s" % t("shader.header_todo", count=len(ir.todos))
 
     uv_attributes, uv_varyings, uv_transfer, uv_fill, uv_count = uv_blocks(ir)
+    lm_attribute, lm_static_src, lm_dynamic_src, meta_lm_attributes = lightmap_blocks(ir)
 
     return SHADER_TEMPLATE.format(
         c_generated=t("shader.comment.generated"),
@@ -398,6 +431,10 @@ def generate(ir, shader_name):
         uv_attributes=uv_attributes,
         uv_varyings=uv_varyings,
         uv_transfer=uv_transfer,
+        lightmap_attribute=lm_attribute,
+        lightmap_uv_src=lm_static_src,
+        lightmap_dynamic_src=lm_dynamic_src,
+        meta_lightmap_attributes=meta_lm_attributes,
         forward_fill=fill_block(ir, uv_fill, full_pass=True),
         simple_fill=fill_block(ir, uv_fill, full_pass=False),
         body=body,

@@ -515,6 +515,12 @@ STRINGS = {
                                   "нет импортёра текстуры для {path}"),
     "unity.model.no_importer": ("no model importer for {path}",
                                 "нет импортёра модели для {path}"),
+    "unity.model.slot_mismatch": (
+        "{name}: renderer material count ({found}) does not match manifest slots "
+        "({expected}) — materials bound by name only, some sections may stay default",
+        "{name}: число материалов рендерера ({found}) не совпадает со слотами "
+        "манифеста ({expected}) — привязка только по имени, часть секций может "
+        "остаться с дефолтным материалом"),
     "unity.clip.no_importer": ("no importer for clip {path}",
                                "нет импортёра для клипа {path}"),
     "unity.clip.no_matching_skeleton": (

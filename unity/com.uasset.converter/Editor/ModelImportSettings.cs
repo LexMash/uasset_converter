@@ -23,8 +23,8 @@ namespace UassetImporter
                 if (importer == null) continue;
 
                 Configure(importer, animated: false);
-                RemapMaterials(importer, mesh.materialSlots, materials);
-                importer.SaveAndReimport();
+                ImportWithRemap(importer, PathMap.AssetPathFor(targetRoot, mesh.file),
+                                mesh.materialSlots, materials, log);
                 count++;
             }
             return count;
@@ -48,8 +48,8 @@ namespace UassetImporter
                     : ModelImporterAnimationType.Generic;
                 importer.avatarSetup = ModelImporterAvatarSetup.CreateFromThisModel;
 
-                RemapMaterials(importer, mesh.materialSlots, materials);
-                importer.SaveAndReimport();
+                ImportWithRemap(importer, PathMap.AssetPathFor(targetRoot, mesh.file),
+                                mesh.materialSlots, materials, log);
 
                 // Клипы будут искать аватар именно по скелету Unreal — запоминаем,
                 // какая модель его определяет.
@@ -101,23 +101,99 @@ namespace UassetImporter
         }
 
         /// <summary>
-        /// Экспортёр FBX называет материалы по имени ассета Unreal, а не по имени
-        /// слота, поэтому регистрируем оба варианта: лишний remap безвреден,
-        /// а недостающий оставил бы модель с розовым материалом.
+        /// Импортирует модель в два прохода и привязывает материалы по НАСТОЯЩИМ
+        /// именам секций FBX.
+        ///
+        /// Unity ищет ремап по имени материала, записанному внутри FBX. Экспортёр
+        /// UE называет секцию по имени назначенного материала-ассета, а дубликат
+        /// того же материала на другом слоте получает числовой суффикс по индексу
+        /// (MI_Trim_A_Black -> MI_Trim_A_Black_4). Секции без материала сохраняют
+        /// имя из исходного DCC (lambert1, phong1, pasted__...). Угадать эти имена
+        /// заранее нельзя — поэтому читаем их из уже импортированной модели.
+        /// </summary>
+        static void ImportWithRemap(ModelImporter importer, string assetPath,
+                                    MaterialSlot[] slots,
+                                    Dictionary<string, Material> materials,
+                                    System.Action<string> log)
+        {
+            // Снимаем прошлые материал-ремапы: иначе после предыдущих прогонов
+            // sharedMaterials вернёт имена уже привязанных внешних .mat, а нам
+            // нужны сырые имена секций из FBX.
+            foreach (var pair in importer.GetExternalObjectMap())
+                if (pair.Key.type == typeof(Material))
+                    importer.RemoveRemap(pair.Key);
+
+            // Проход 1: секции получают встроенные материалы с сырыми именами FBX
+            // (Configure уже выставил ImportViaMaterialDescription + InPrefab).
+            importer.SaveAndReimport();
+
+            var realNames = RealNamesByIndex(assetPath, slots?.Length ?? 0, log);
+            RemapMaterials(importer, slots, materials, realNames);
+
+            // Проход 2: применяем ремапы.
+            importer.SaveAndReimport();
+        }
+
+        /// <summary>
+        /// Настоящие имена материалов секций импортированной модели, по индексу
+        /// сабмеша (== индекс слота манифеста). null, если рендерер не найден или
+        /// число материалов не совпало со слотами — тогда привязка идёт только по
+        /// именам-догадкам.
+        /// </summary>
+        static string[] RealNamesByIndex(string assetPath, int expected,
+                                         System.Action<string> log)
+        {
+            var go = AssetDatabase.LoadMainAssetAtPath(assetPath) as GameObject;
+            if (go == null) return null;
+
+            Material[] shared = null;
+            var mr = go.GetComponentInChildren<MeshRenderer>(true);
+            if (mr != null)
+                shared = mr.sharedMaterials;
+            else
+            {
+                var smr = go.GetComponentInChildren<SkinnedMeshRenderer>(true);
+                if (smr != null) shared = smr.sharedMaterials;
+            }
+            if (shared == null) return null;
+
+            if (expected > 0 && shared.Length != expected)
+            {
+                log(Loc.T("unity.model.slot_mismatch", "name", go.name,
+                          "found", shared.Length, "expected", expected));
+                return null;
+            }
+
+            var names = new string[shared.Length];
+            for (var i = 0; i < shared.Length; i++)
+                names[i] = shared[i] != null ? shared[i].name : null;
+            return names;
+        }
+
+        /// <summary>
+        /// Регистрирует ремапы материалов. Ключ, по которому Unity реально ищет —
+        /// это настоящее имя секции FBX (realNames по индексу слота). Дополнительно
+        /// регистрируем имя ассета и имя слота: лишний remap безвреден, а для
+        /// краевых случаев (не удалось прочитать имена) он остаётся страховкой.
         /// </summary>
         static void RemapMaterials(ModelImporter importer, MaterialSlot[] slots,
-                                   Dictionary<string, Material> materials)
+                                   Dictionary<string, Material> materials,
+                                   string[] realNames = null)
         {
             if (slots == null) return;
 
-            foreach (var slot in slots)
+            for (var i = 0; i < slots.Length; i++)
             {
+                var slot = slots[i];
                 if (string.IsNullOrEmpty(slot.material)) continue;
                 if (!materials.TryGetValue(slot.material, out var material)) continue;
 
                 var names = new HashSet<string> { MaterialBuilder.ShortName(slot.material) };
                 if (!string.IsNullOrEmpty(slot.slot))
                     names.Add(slot.slot);
+                if (realNames != null && i < realNames.Length &&
+                    !string.IsNullOrEmpty(realNames[i]))
+                    names.Add(realNames[i]);
 
                 foreach (var name in names)
                 {

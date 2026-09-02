@@ -1135,6 +1135,10 @@
       "v": "no model importer for {path}"
     },
     {
+      "k": "unity.model.slot_mismatch",
+      "v": "{name}: renderer material count ({found}) does not match manifest slots ({expected}) — materials bound by name only, some sections may stay default"
+    },
+    {
       "k": "unity.texture.no_importer",
       "v": "no texture importer for {path}"
     },

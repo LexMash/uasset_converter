@@ -12,3 +12,5 @@ __pycache__/
 *.csproj
 *.sln
 *.meta
+/.research
+/.research_unitycli

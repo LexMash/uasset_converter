@@ -130,7 +130,9 @@ namespace UassetImporter
             if (entry.emission)
             {
                 material.EnableKeyword("_EMISSION");
-                material.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
+                // Baked, а не Realtime: иначе эмиссия не попадает в лайтмапы и
+                // запекание конвертированных сцен выглядит странно.
+                material.globalIlluminationFlags = MaterialGlobalIlluminationFlags.BakedEmissive;
             }
         }
 

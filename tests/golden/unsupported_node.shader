@@ -82,6 +82,12 @@ Shader "UassetConverted/unsupported_node"
 
             #pragma multi_compile _ _MAIN_LIGHT_SHADOWS _MAIN_LIGHT_SHADOWS_CASCADE _MAIN_LIGHT_SHADOWS_SCREEN
             #pragma multi_compile _ _ADDITIONAL_LIGHTS_VERTEX _ADDITIONAL_LIGHTS
+            // Forward+: дополнительные источники грузятся кластеризованно и без
+            // этого кейворда просто не применяются. _CLUSTER_LIGHT_LOOP — имя в
+            // URP 17 (Unity 6), _FORWARD_PLUS — то же в URP 14 (2022.3 LTS);
+            // неиспользуемый вариант пайплайн не активирует.
+            #pragma multi_compile _ _CLUSTER_LIGHT_LOOP
+            #pragma multi_compile _ _FORWARD_PLUS
             #pragma multi_compile_fragment _ _ADDITIONAL_LIGHT_SHADOWS
             #pragma multi_compile_fragment _ _SHADOWS_SOFT
             #pragma multi_compile_fragment _ _SCREEN_SPACE_OCCLUSION

@@ -149,6 +149,7 @@ namespace UassetImporter
                         go.name = actorName;
                         ApplyTransform(go.transform, solo.transform);
                         ApplyOverrides(go, solo.materialOverrides, materials, entry.name, log);
+                        MarkStaticIfMesh(go);
                         placed++;
                     }
                     else
@@ -190,6 +191,7 @@ namespace UassetImporter
                 ApplyTransform(instance.transform, obj.transform);
                 ParentTo(instance.transform, obj.parentId, actorGo);
                 ApplyOverrides(instance, obj.materialOverrides, materials, entry.name, log);
+                MarkStaticIfMesh(instance);
                 created.Add(instance);
                 placed++;
             }
@@ -225,6 +227,24 @@ namespace UassetImporter
             log(Loc.T("unity.level.built", "name", entry.name, "objects", placed,
                       "lights", lights, "missing", missingMesh));
             return true;
+        }
+
+        // Помечает статикой только неанимированную геометрию: без этого лайтмаппер
+        // не считает меши статикой и запекание выходит мусорным. Скелетные меши
+        // (есть SkinnedMeshRenderer) статикой помечать нельзя — их пропускаем.
+        static void MarkStaticIfMesh(GameObject go)
+        {
+            if (go.GetComponentInChildren<SkinnedMeshRenderer>() != null)
+                return;
+            if (go.GetComponentInChildren<MeshRenderer>() == null)
+                return;
+            // Флаг нужен на объекте с рендерером, а он обычно на дочернем импорта.
+            // Скелетных в иерархии нет (выше вышли), поэтому помечаем всё дерево.
+            const StaticEditorFlags flags =
+                StaticEditorFlags.ContributeGI | StaticEditorFlags.BatchingStatic |
+                StaticEditorFlags.OccluderStatic | StaticEditorFlags.OccludeeStatic;
+            foreach (var t in go.GetComponentsInChildren<Transform>(true))
+                GameObjectUtility.SetStaticEditorFlags(t.gameObject, flags);
         }
 
         static void ParentTo(Transform child, string parentId,

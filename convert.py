@@ -34,7 +34,7 @@ for stream in (sys.stdout, sys.stderr):
     except (AttributeError, ValueError):
         pass
 
-STEPS = ("export", "shaders", "postprocess", "all")
+STEPS = ("export", "shaders", "shadergraph", "postprocess", "all")
 
 # Папки Content, которые в дереве выбора показывать бессмысленно.
 SKIPPED_CONTENT_DIRS = {"__ExternalActors__", "__ExternalObjects__", "Collections",
@@ -287,6 +287,13 @@ def run_step(step, config, on_line=None, on_progress=None, should_stop=None):
             return code
     if step in ("shaders", "all"):
         code = run_python_step("shader_gen.py", config, on_line)
+        if code != 0:
+            return code
+    # Второй путь материалов (Unity Shader Graph) — отдельный шаг; в составе
+    # "all" запускается, только если включён в конфиге.
+    if step == "shadergraph" or (step == "all"
+                                 and config.get("shadergraph", {}).get("enabled")):
+        code = run_python_step("shadergraph_gen.py", config, on_line)
         if code != 0:
             return code
     if step in ("postprocess", "all"):

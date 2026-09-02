@@ -89,8 +89,10 @@ namespace UassetImporter
     public class MaterialEntry
     {
         public string uePath;
-        public string mode;          // "shader" — свой транспилированный, "fallback" — URP/Lit
+        public string mode;          // "shader" — HLSL, "shadergraph" — Shader Graph, "fallback" — URP/Lit
+        public string materialSource; // "transpiled_hlsl" / "shadergraph" / "urp_lit"
         public string shader;
+        public string shaderFile;    // путь .shadergraph относительно output (для mode="shadergraph")
         public bool twoSided;
         public string blendMode;     // BLEND_OPAQUE / BLEND_MASKED / BLEND_TRANSLUCENT / ...
         public float alphaCutoff;
@@ -106,6 +108,15 @@ namespace UassetImporter
     {
         public string uePath;
         public string shader;
+        public string file;
+    }
+
+    // Второй путь материалов: файл .shadergraph, который Unity импортирует
+    // нативно (свой импортёр не нужен). shaderFile у MaterialEntry ссылается сюда.
+    [Serializable]
+    public class ShaderGraphEntry
+    {
+        public string uePath;
         public string file;
     }
 
@@ -128,6 +139,7 @@ namespace UassetImporter
         public AnimationEntry[] animations;
         public MaterialEntry[] materials;
         public ShaderEntry[] shaders;
+        public ShaderGraphEntry[] shadergraphs;
         public LevelEntry[] levels;
 
         public static UassetManifest Load(string json)
@@ -139,6 +151,7 @@ namespace UassetImporter
             manifest.animations ??= Array.Empty<AnimationEntry>();
             manifest.materials ??= Array.Empty<MaterialEntry>();
             manifest.shaders ??= Array.Empty<ShaderEntry>();
+            manifest.shadergraphs ??= Array.Empty<ShaderGraphEntry>();
             manifest.levels ??= Array.Empty<LevelEntry>();
             return manifest;
         }

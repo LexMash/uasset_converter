@@ -122,6 +122,42 @@ def test_shaders_then_postprocess(tmp_path, language):
     assert expected in report
 
 
+def test_shadergraph_then_postprocess(tmp_path):
+    """Второй путь: shadergraph_gen -> postprocess, материал садится на Shader Graph."""
+    out_dir = str(tmp_path)
+    with io.open(os.path.join(out_dir, "manifest.json"), "w", encoding="utf-8") as fh:
+        json.dump(_manifest(out_dir), fh, ensure_ascii=False)
+
+    config = _config(out_dir, "en")
+    config["shadergraph"]["enabled"] = True
+    config_path = os.path.join(out_dir, "config.json")
+    with io.open(config_path, "w", encoding="utf-8") as fh:
+        json.dump(config, fh, ensure_ascii=False)
+
+    result = _run("shadergraph_gen.py", config_path)
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert os.path.isfile(os.path.join(out_dir, "shadergraphs.json"))
+    assert os.path.isfile(os.path.join(out_dir, "Shaders", "M_PbrBasic.shadergraph"))
+
+    result = _run("postprocess.py", config_path)
+    assert result.returncode == 0, result.stdout + result.stderr
+
+    with io.open(os.path.join(out_dir, "unity_manifest.json"), encoding="utf-8") as fh:
+        unity = json.load(fh)
+
+    instance = next(m for m in unity["materials"]
+                    if m["uePath"] == "/Game/Test/MI_PbrBasic_Red")
+    assert instance["mode"] == "shadergraph"
+    assert instance["materialSource"] == "shadergraph"
+    assert instance["shaderFile"].endswith("M_PbrBasic.shadergraph")
+    # Переопределение параметров работает так же, как на HLSL-пути.
+    tint = next(c for c in instance["colors"] if c["name"] == "_Tint")
+    assert (tint["r"], tint["g"], tint["b"]) == (1.0, 0.0, 0.0)
+    # Файл графа перечислен для Unity-стороны.
+    assert any(s["file"].endswith("M_PbrBasic.shadergraph")
+               for s in unity["shadergraphs"])
+
+
 def _levels_manifest():
     """Манифест экспорта с одним уровнем и одним экспортированным мешем."""
     return {

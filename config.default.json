@@ -62,6 +62,12 @@
       "M_Base_BasicUI": "UI-материал; в Unity другая система интерфейса"
     }
   },
+  "shadergraph": {
+    "_comment": "Второй путь материалов: генерировать редактируемый Unity Shader Graph (.shadergraph) вместо/вместе с HLSL. enabled=true подключает шаг shadergraph к 'all'.",
+    "enabled": false,
+    "namespace": "UassetConverted",
+    "sg_version": 3
+  },
   "textures": {
     "format": "png",
     "hdr_format": "exr",

@@ -475,6 +475,58 @@ def build_shader_material(record, values, shader_name, shader_info, library, con
     }
 
 
+def build_shadergraph_material(record, values, shadergraph_file, info):
+    """
+    Материал на транспилированном Unity Shader Graph (второй путь).
+
+    Имена свойств совпадают с HLSL-путём (та же sanitize из общего IR), поэтому
+    сопоставление параметров такое же. Отличие одно: StaticSwitch у SG-пути —
+    это Boolean-свойство (рантайм-ветка), а не shader_feature, поэтому switch
+    едет обычным float 0/1 с именем ключевого слова, без keywords.
+    """
+    known = set(info.get("properties", {}))
+    textures, floats, colors = {}, {}, {}
+    unmatched = []
+
+    for ue_name, texture_path in values["textures"].items():
+        prop = sanitize(ue_name)
+        if prop in known and texture_path:
+            textures[prop] = {"ue_path": texture_path}
+        elif texture_path and ue_name not in INTERNAL_PARAMETERS:
+            unmatched.append(ue_name)
+
+    for ue_name, value in values["scalars"].items():
+        prop = sanitize(ue_name)
+        if prop in known:
+            floats[prop] = float(value or 0.0)
+        elif ue_name not in INTERNAL_PARAMETERS:
+            unmatched.append(ue_name)
+
+    for ue_name, value in values["vectors"].items():
+        prop = sanitize(ue_name)
+        if prop in known and isinstance(value, list):
+            colors[prop] = value
+        elif isinstance(value, list) and ue_name not in INTERNAL_PARAMETERS:
+            unmatched.append(ue_name)
+
+    for ue_name, enabled in values["switches"].items():
+        for keyword, source in info.get("keywords", {}).items():
+            if source == ue_name:
+                floats[keyword] = 1.0 if enabled else 0.0   # Boolean-свойство
+
+    return {
+        "mode": "shadergraph",
+        "shader": "",                       # имя не нужно: грузим по пути файла
+        "shader_file": shadergraph_file,
+        "textures": textures,
+        "floats": floats,
+        "colors": colors,
+        "keywords": {},
+        "unmatched_parameters": sorted(set(unmatched)),
+        "emission": False,
+    }
+
+
 # ----------------------------------------------------------------------------
 # Анимации
 # ----------------------------------------------------------------------------
@@ -579,6 +631,18 @@ def main():
     # Переиспользованные шейдеры не несут списка свойств — берём его у оригинала.
     by_shader_name = {e["shader"]: e for e in shaders_index.values() if not e.get("reused")}
 
+    # Второй путь материалов: Unity Shader Graph. Если он включён и для мастера
+    # есть .shadergraph — материал ссылается на него, а не на HLSL-шейдер.
+    prefer_shadergraph = bool(config.get("shadergraph", {}).get("enabled"))
+    shadergraphs_index = {}
+    shadergraphs_path = os.path.join(out_dir, "shadergraphs.json")
+    if os.path.isfile(shadergraphs_path):
+        with open(shadergraphs_path, "r", encoding="utf-8") as fh:
+            for entry in json.load(fh).get("shadergraphs", []):
+                shadergraphs_index[entry["ue_path"]] = entry
+    by_shadergraph_file = {e["shadergraph"]: e for e in shadergraphs_index.values()
+                           if not e.get("reused")}
+
     materials_by_path = {m["ue_path"]: m for m in manifest.get("materials", [])}
     library = TextureLibrary(manifest, out_dir)
     mapping = config["material_mapping"]
@@ -609,7 +673,19 @@ def main():
         state = resolve_render_state(chain)
 
         shader_entry = shaders_index.get(master) if master else None
-        if shader_entry:
+        sg_entry = shadergraphs_index.get(master) if (master and prefer_shadergraph) else None
+        if sg_entry:
+            sg_file = sg_entry["shadergraph"]
+            info = sg_entry if not sg_entry.get("reused") else by_shadergraph_file.get(sg_file, {})
+            built = build_shadergraph_material(record, values, sg_file, info)
+            shader_count += 1
+            dropped = set(info.get("dropped_parameters") or [])
+            surprising = [p for p in built["unmatched_parameters"] if p not in dropped]
+            if surprising:
+                notes.append(("section.materials", ue_path,
+                              "post.note.unmatched_parameters",
+                              {"names": ", ".join(surprising)}))
+        elif shader_entry:
             shader_name = shader_entry["shader"]
             info = shader_entry if not shader_entry.get("reused") else by_shader_name.get(shader_name, {})
             built = build_shader_material(record, values, shader_name, info, library, config)
@@ -683,6 +759,7 @@ def main():
         })
 
     unity["shaders"] = [e for e in shaders_index.values() if not e.get("reused")]
+    unity["shadergraphs"] = [e for e in shadergraphs_index.values() if not e.get("reused")]
 
     # --- уровни -----------------------------------------------------------
     unity["levels"] = process_levels(out_dir, manifest, notes)
@@ -860,7 +937,10 @@ def to_unity_json(unity):
         "materials": [{
             "uePath": m["ue_path"],
             "mode": m["mode"],
+            "materialSource": {"shadergraph": "shadergraph", "shader": "transpiled_hlsl",
+                               "fallback": "urp_lit"}.get(m["mode"], "urp_lit"),
             "shader": m["shader"],
+            "shaderFile": m.get("shader_file") or "",
             "twoSided": bool(m.get("two_sided")),
             "blendMode": m.get("blend_mode") or "BLEND_OPAQUE",
             "alphaCutoff": float(m.get("alpha_cutoff") or 0.333),
@@ -873,6 +953,8 @@ def to_unity_json(unity):
         } for m in unity["materials"]],
         "shaders": [{"uePath": s["ue_path"], "shader": s["shader"], "file": s.get("file", "")}
                     for s in unity["shaders"]],
+        "shadergraphs": [{"uePath": s["ue_path"], "file": s["shadergraph"]}
+                         for s in unity.get("shadergraphs", [])],
         "levels": [{"uePath": lvl["uePath"], "name": lvl["name"], "file": lvl["file"]}
                    for lvl in unity.get("levels", [])],
     }

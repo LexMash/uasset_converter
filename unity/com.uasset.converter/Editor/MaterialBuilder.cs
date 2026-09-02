@@ -27,21 +27,34 @@ namespace UassetImporter
 
             foreach (var entry in manifest.materials)
             {
-                var shader = Shader.Find(entry.shader);
+                // Второй путь: материал на Unity Shader Graph — грузим шейдер по
+                // пути .shadergraph (имени у него нет). HLSL-путь — по имени.
+                Shader shader = null;
+                if (entry.mode == "shadergraph" && !string.IsNullOrEmpty(entry.shaderFile))
+                {
+                    var graphPath = PathMap.AssetPathFor(targetRoot, entry.shaderFile);
+                    shader = AssetDatabase.LoadAssetAtPath<Shader>(graphPath);
+                }
+                else if (!string.IsNullOrEmpty(entry.shader))
+                {
+                    shader = Shader.Find(entry.shader);
+                }
+
                 if (shader == null)
                 {
-                    // Свой шейдер мог не скомпилироваться — тогда честнее взять
-                    // Lit, чем оставить розовый материал без объяснений.
+                    // Свой шейдер/граф мог не скомпилироваться — тогда честнее
+                    // взять Lit, чем оставить розовый материал без объяснений.
+                    var wanted = entry.mode == "shadergraph" ? entry.shaderFile : entry.shader;
                     var fallbackName = FallbackShaderName();
                     shader = Shader.Find(fallbackName);
                     if (shader == null)
                     {
-                        log(Loc.T("unity.material.no_shader_at_all", "shader", entry.shader,
+                        log(Loc.T("unity.material.no_shader_at_all", "shader", wanted,
                               "fallback", fallbackName, "path", entry.uePath));
                         failed++;
                         continue;
                     }
-                    log(Loc.T("unity.material.shader_missing", "shader", entry.shader,
+                    log(Loc.T("unity.material.shader_missing", "shader", wanted,
                         "name", ShortName(entry.uePath), "fallback", fallbackName));
                 }
 
@@ -63,7 +76,7 @@ namespace UassetImporter
                 EditorUtility.SetDirty(material);
                 result[entry.uePath] = material;
 
-                if (entry.mode == "shader") shaderMode++;
+                if (entry.mode == "shader" || entry.mode == "shadergraph") shaderMode++;
                 else fallbackMode++;
             }
 
@@ -164,9 +177,10 @@ namespace UassetImporter
             if (material.HasProperty("_Cutoff"))
                 material.SetFloat("_Cutoff", entry.alphaCutoff);
 
-            // Свой шейдер уже несёт нужные Blend/ZWrite прямо в ShaderLab —
-            // трогать его настройки поверх не нужно и вредно.
-            if (entry.mode == "shader")
+            // Свой шейдер (HLSL) и Shader Graph уже несут нужные Blend/ZWrite —
+            // HLSL прямо в ShaderLab, Shader Graph через UniversalTarget. Трогать
+            // их настройки поверх не нужно и вредно.
+            if (entry.mode == "shader" || entry.mode == "shadergraph")
                 return;
 
             var alphaClip = entry.blendMode == "BLEND_MASKED";

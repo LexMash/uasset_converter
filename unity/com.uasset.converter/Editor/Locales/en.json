@@ -191,6 +191,10 @@
       "v": "Scan"
     },
     {
+      "k": "gui.action.shadergraph",
+      "v": "Shader Graph"
+    },
+    {
       "k": "gui.action.shaders",
       "v": "Generate shaders"
     },
@@ -349,6 +353,10 @@
     {
       "k": "gui.option.scope",
       "v": "Conversion scope:"
+    },
+    {
+      "k": "gui.option.shadergraph",
+      "v": "Materials as Shader Graph (URP)"
     },
     {
       "k": "gui.path.engine",
@@ -917,6 +925,10 @@
     {
       "k": "unity.convert.step_postprocess",
       "v": "Post-process"
+    },
+    {
+      "k": "unity.convert.step_shadergraph",
+      "v": "Shader Graph"
     },
     {
       "k": "unity.convert.step_shaders",

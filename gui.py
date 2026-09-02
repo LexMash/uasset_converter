@@ -59,6 +59,8 @@ class ConverterApp:
         self.output_var = tk.StringVar(value=config["paths"]["output_dir"])
         self.scope_var = tk.StringVar(value=config["scope"].get("mode", "test"))
         self.flip_var = tk.BooleanVar(value=config["textures"].get("flip_normal_green", True))
+        self.shadergraph_var = tk.BooleanVar(
+            value=config.get("shadergraph", {}).get("enabled", False))
         self.avatar_var = tk.StringVar(value=config["unity"].get("avatar_type", "Generic"))
         self.light_mult_var = tk.StringVar(
             value=str(config.get("unity", {}).get("light_intensity_multiplier", 1.0)))
@@ -173,6 +175,8 @@ class ConverterApp:
         ttk.Separator(box).pack(fill="x", pady=6)
         ttk.Checkbutton(box, text=t("gui.option.flip_normal"),
                         variable=self.flip_var).pack(anchor="w")
+        ttk.Checkbutton(box, text=t("gui.option.shadergraph"),
+                        variable=self.shadergraph_var).pack(anchor="w")
 
         row = ttk.Frame(box)
         row.pack(anchor="w", pady=(6, 0))
@@ -355,6 +359,7 @@ class ConverterApp:
             ("scan", "gui.action.scan", self.action_scan),
             ("export", "gui.action.export", lambda: self.run_step("export")),
             ("shaders", "gui.action.shaders", lambda: self.run_step("shaders")),
+            ("shadergraph", "gui.action.shadergraph", lambda: self.run_step("shadergraph")),
             ("postprocess", "gui.action.postprocess", lambda: self.run_step("postprocess")),
             ("all", "gui.action.all", lambda: self.run_step("all")),
         ]
@@ -435,6 +440,7 @@ class ConverterApp:
         self.config["scope"]["include_paths"] = sorted(self.selected_folders)
         self.config["scope"]["level_paths"] = sorted(self.selected_levels)
         self.config["textures"]["flip_normal_green"] = self.flip_var.get()
+        self.config.setdefault("shadergraph", {})["enabled"] = self.shadergraph_var.get()
         self.config["unity"]["avatar_type"] = self.avatar_var.get()
         try:
             self.config["unity"]["light_intensity_multiplier"] = float(self.light_mult_var.get())

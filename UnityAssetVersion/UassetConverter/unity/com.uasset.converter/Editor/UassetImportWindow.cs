@@ -214,6 +214,8 @@ namespace UassetImporter
             foreach (var animation in manifest.animations) files.Add(animation.file);
             foreach (var shader in manifest.shaders)
                 if (!string.IsNullOrEmpty(shader.file)) files.Add(shader.file);
+            foreach (var graph in manifest.shadergraphs)
+                if (!string.IsNullOrEmpty(graph.file)) files.Add(graph.file);
 
             var copied = 0;
             foreach (var relative in files)

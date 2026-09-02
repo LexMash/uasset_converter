@@ -248,6 +248,7 @@ namespace UassetImporter
 
             ConfigPopup("scope.mode", "gui.option.scope", ScopeValues, ScopeLabelKeys);
             ConfigToggle("textures.flip_normal_green", "gui.option.flip_normal");
+            ConfigToggle("shadergraph.enabled", "gui.option.shadergraph");
             EditorGUILayout.Space();
         }
 
@@ -303,6 +304,7 @@ namespace UassetImporter
                 {
                     if (GUILayout.Button(Loc.T("unity.convert.step_export"))) Run("export", false);
                     if (GUILayout.Button(Loc.T("unity.convert.step_shaders"))) Run("shaders", false);
+                    if (GUILayout.Button(Loc.T("unity.convert.step_shadergraph"))) Run("shadergraph", false);
                     if (GUILayout.Button(Loc.T("unity.convert.step_postprocess"))) Run("postprocess", false);
                 }
                 if (GUILayout.Button(Loc.T("unity.convert.convert_and_import"), GUILayout.Height(30)))

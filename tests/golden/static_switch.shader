@@ -18,6 +18,7 @@ Shader "UassetConverted/static_switch"
         {
             "RenderType" = "Opaque"
             "RenderPipeline" = "UniversalPipeline"
+            "UniversalMaterialType" = "Lit"
             "Queue" = "Geometry"
         }
         LOD 300
@@ -197,6 +198,134 @@ Shader "UassetConverted/static_switch"
                 color.rgb = MixFog(color.rgb, inputData.fogCoord);
                 color.a = 1.0;
                 return color;
+            }
+            ENDHLSL
+        }
+
+        Pass
+        {
+            Name "GBuffer"
+            Tags { "LightMode" = "UniversalGBuffer" }
+
+            ZWrite On
+            ZTest LEqual
+            Cull [_Cull]
+
+            HLSLPROGRAM
+            #pragma vertex GBufferVertex
+            #pragma fragment GBufferFragment
+            #pragma target 4.5
+            // Deferred не поддерживается на GL — там пойдёт forward-проход.
+            #pragma exclude_renderers gles3 glcore
+            #pragma shader_feature_local _USE_DETAIL
+            #pragma multi_compile _ _MAIN_LIGHT_SHADOWS _MAIN_LIGHT_SHADOWS_CASCADE _MAIN_LIGHT_SHADOWS_SCREEN
+            #pragma multi_compile_fragment _ _SHADOWS_SOFT
+            // Обязателен для Deferred+: без него у шейдера нет варианта под
+            // clustered deferred и меш остаётся чёрным.
+            #pragma multi_compile _ _CLUSTER_LIGHT_LOOP
+            #pragma multi_compile _ LIGHTMAP_ON
+            #pragma multi_compile _ DIRLIGHTMAP_COMBINED
+            #pragma multi_compile _ LIGHTMAP_SHADOW_MIXING
+            #pragma multi_compile _ SHADOWS_SHADOWMASK
+            #pragma multi_compile _ _MIXED_LIGHTING_SUBTRACTIVE
+            #pragma multi_compile_fragment _ _GBUFFER_NORMALS_OCT
+            #pragma multi_compile_fragment _ _RENDER_PASS_ENABLED
+            #pragma multi_compile_fragment _ _WRITE_RENDERING_LAYERS
+            #pragma multi_compile_instancing
+
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/UnityGBuffer.hlsl"
+
+            struct GBufferAttributes
+            {
+                float4 positionOS : POSITION;
+                float3 normalOS   : NORMAL;
+                float4 tangentOS  : TANGENT;
+                float2 uv0        : TEXCOORD0;
+                float2 staticLightmapUV : TEXCOORD1;
+                float4 color      : COLOR;
+                UNITY_VERTEX_INPUT_INSTANCE_ID
+            };
+
+            struct GBufferVaryings
+            {
+                float4 positionCS  : SV_POSITION;
+                float3 positionWS  : TEXCOORD0;
+                float3 normalWS    : TEXCOORD1;
+                float4 tangentWS   : TEXCOORD2;
+                float2 uv0         : TEXCOORD3;
+                float4 color       : COLOR;
+                DECLARE_LIGHTMAP_OR_SH(staticLightmapUV, vertexSH, 8);
+                UNITY_VERTEX_INPUT_INSTANCE_ID
+                UNITY_VERTEX_OUTPUT_STEREO
+            };
+
+            GBufferVaryings GBufferVertex(GBufferAttributes input)
+            {
+                GBufferVaryings output = (GBufferVaryings)0;
+                UNITY_SETUP_INSTANCE_ID(input);
+                UNITY_TRANSFER_INSTANCE_ID(input, output);
+                UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
+
+                VertexPositionInputs positions = GetVertexPositionInputs(input.positionOS.xyz);
+                VertexNormalInputs normals = GetVertexNormalInputs(input.normalOS, input.tangentOS);
+
+                output.positionCS = positions.positionCS;
+                output.positionWS = positions.positionWS;
+                output.normalWS   = normals.normalWS;
+                output.tangentWS  = float4(normals.tangentWS, input.tangentOS.w * GetOddNegativeScale());
+                output.uv0 = input.uv0;
+                output.color = input.color;
+                OUTPUT_LIGHTMAP_UV(input.staticLightmapUV, unity_LightmapST, output.staticLightmapUV);
+                OUTPUT_SH(normals.normalWS, output.vertexSH);
+                return output;
+            }
+
+            FragmentOutput GBufferFragment(GBufferVaryings input, half facing : VFACE)
+            {
+                UNITY_SETUP_INSTANCE_ID(input);
+                UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
+
+                SurfaceInputs surfaceInputs = (SurfaceInputs)0;
+                surfaceInputs.uv0 = input.uv0;
+                SurfaceValues surface = EvaluateSurface(surfaceInputs);
+
+                InputData inputData = (InputData)0;
+                inputData.positionWS = input.positionWS;
+
+                float sgn = input.tangentWS.w;
+                float3 bitangent = sgn * cross(input.normalWS.xyz, input.tangentWS.xyz);
+                half3x3 tangentToWorld = half3x3(input.tangentWS.xyz, bitangent, input.normalWS.xyz);
+                inputData.tangentToWorld = tangentToWorld;
+                inputData.normalWS = NormalizeNormalPerPixel(TransformTangentToWorld(surface.normalTS, tangentToWorld));
+
+                inputData.viewDirectionWS = SafeNormalize(GetCameraPositionWS() - input.positionWS);
+                inputData.shadowCoord = TransformWorldToShadowCoord(input.positionWS);
+                inputData.bakedGI = SAMPLE_GI(input.staticLightmapUV, input.vertexSH, inputData.normalWS);
+                inputData.normalizedScreenSpaceUV = GetNormalizedScreenSpaceUV(input.positionCS);
+                inputData.shadowMask = SAMPLE_SHADOWMASK(input.staticLightmapUV);
+
+                SurfaceData surfaceData = (SurfaceData)0;
+                surfaceData.albedo     = surface.albedo;
+                surfaceData.metallic   = surface.metallic;
+                surfaceData.smoothness = surface.smoothness;
+                surfaceData.normalTS   = surface.normalTS;
+                surfaceData.emission   = surface.emission;
+                surfaceData.occlusion  = surface.occlusion;
+                surfaceData.alpha      = surface.alpha;
+                surfaceData.specular   = half3(0, 0, 0);
+                surfaceData.clearCoatMask = 0;
+                surfaceData.clearCoatSmoothness = 0;
+
+                // Deferred кладёт материал в G-буфер: BRDF + GI, свет считает
+                // движок отдельным проходом (в т.ч. кластеризованно для Deferred+).
+                BRDFData brdfData;
+                InitializeBRDFData(surfaceData.albedo, surfaceData.metallic, surfaceData.specular,
+                                   surfaceData.smoothness, surfaceData.alpha, brdfData);
+                half3 gi = GlobalIllumination(brdfData, inputData.bakedGI, surfaceData.occlusion,
+                                              inputData.positionWS, inputData.normalWS, inputData.viewDirectionWS);
+                return BRDFDataToGbuffer(brdfData, inputData, surfaceData.smoothness,
+                                         surfaceData.emission + gi, surfaceData.occlusion);
             }
             ENDHLSL
         }

@@ -191,6 +191,10 @@
       "v": "Сканировать"
     },
     {
+      "k": "gui.action.shadergraph",
+      "v": "Shader Graph"
+    },
+    {
       "k": "gui.action.shaders",
       "v": "Сгенерировать шейдеры"
     },
@@ -349,6 +353,10 @@
     {
       "k": "gui.option.scope",
       "v": "Объём конвертации:"
+    },
+    {
+      "k": "gui.option.shadergraph",
+      "v": "Материалы как Shader Graph (URP)"
     },
     {
       "k": "gui.path.engine",
@@ -917,6 +925,10 @@
     {
       "k": "unity.convert.step_postprocess",
       "v": "Постобработка"
+    },
+    {
+      "k": "unity.convert.step_shadergraph",
+      "v": "Shader Graph"
     },
     {
       "k": "unity.convert.step_shaders",

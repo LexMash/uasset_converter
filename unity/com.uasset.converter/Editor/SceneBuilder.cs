@@ -106,14 +106,20 @@ namespace UassetImporter
                     meshesByActor[key] = list = new List<LevelObject>();
                 list.Add(obj);
             }
-            var lightCountByActor = new Dictionary<string, int>();
+            var lightsByActor = new Dictionary<string, List<LevelLight>>();
             foreach (var lightData in level.lights)
             {
                 if (!lightData.visible) continue;
                 var key = lightData.parentId ?? "";
-                lightCountByActor.TryGetValue(key, out var n);
-                lightCountByActor[key] = n + 1;
+                if (!lightsByActor.TryGetValue(key, out var list))
+                    lightsByActor[key] = list = new List<LevelLight>();
+                list.Add(lightData);
             }
+            // id актёра → его метка (имя как в аутлайнере UE) — для именования ламп.
+            var actorNameById = new Dictionary<string, string>();
+            foreach (var actor in level.actors)
+                if (!string.IsNullOrEmpty(actor.id))
+                    actorNameById[actor.id] = actor.name;
             var isParent = new HashSet<string>();
             foreach (var actor in level.actors)
                 if (!string.IsNullOrEmpty(actor.parentId))
@@ -124,20 +130,24 @@ namespace UassetImporter
 
             // Первый проход: GameObject на актёра. Актёра с ровно одним мешем, без
             // ламп и без детей представляем САМИМ префаб-инстансом (имя = имя актёра,
-            // без пустой обёртки). Остальные — контейнером; их компоненты добавим ниже.
+            // без пустой обёртки). Актёра с одной лампой и без мешей — самим
+            // объектом света. Остальные — контейнером; их компоненты добавим ниже.
             var actorGo = new Dictionary<string, GameObject>();
             var handledMesh = new HashSet<LevelObject>();
+            var handledLight = new HashSet<LevelLight>();
+            var lights = 0;
             foreach (var actor in level.actors)
             {
                 if (string.IsNullOrEmpty(actor.id) || actorGo.ContainsKey(actor.id))
                     continue;
 
                 meshesByActor.TryGetValue(actor.id, out var actorMeshes);
-                lightCountByActor.TryGetValue(actor.id, out var actorLights);
+                lightsByActor.TryGetValue(actor.id, out var actorLights);
                 var actorName = string.IsNullOrEmpty(actor.name) ? "Actor" : actor.name;
 
                 GameObject go = null;
-                if (actorMeshes != null && actorMeshes.Count == 1 && actorLights == 0 &&
+                if (actorMeshes != null && actorMeshes.Count == 1 &&
+                    (actorLights == null || actorLights.Count == 0) &&
                     !isParent.Contains(actor.id))
                 {
                     var solo = actorMeshes[0];
@@ -156,6 +166,24 @@ namespace UassetImporter
                     {
                         missingMesh++;   // модель не найдена — оставим пустой контейнер
                     }
+                }
+
+                // Чистый light-актёр: сам объект несёт компонент Light, без пустой
+                // обёртки. Имя = метка актёра (как в аутлайнере UE).
+                if (go == null && (actorMeshes == null || actorMeshes.Count == 0) &&
+                    actorLights != null && actorLights.Count == 1 &&
+                    !isParent.Contains(actor.id))
+                {
+                    var light = actorLights[0];
+                    go = new GameObject(actorName);
+                    ApplyTransform(go.transform, light.transform);
+                    // Unreal-лампы излучают вдоль локального +X, Unity — вдоль +Z:
+                    // доворачиваем на +90° вокруг Y (Point изотропен — не трогаем).
+                    if (light.unityType != "Point")
+                        go.transform.rotation *= Quaternion.Euler(0f, 90f, 0f);
+                    ConfigureLight(go.AddComponent<Light>(), light);
+                    handledLight.Add(light);
+                    lights++;
                 }
 
                 if (go == null)
@@ -196,12 +224,12 @@ namespace UassetImporter
                 placed++;
             }
 
-            var lights = 0;
+            // Оставшиеся лампы (мульти-лайт актёры, лампы на mesh-актёрах) ставим
+            // дочерним объектом. Схлопнутые в первом проходе — пропускаем.
             foreach (var lightData in level.lights)
             {
-                if (!lightData.visible) continue;
-                var go = new GameObject(string.IsNullOrEmpty(lightData.id)
-                    ? "Light" : MaterialBuilder.ShortName(lightData.id));
+                if (!lightData.visible || handledLight.Contains(lightData)) continue;
+                var go = new GameObject(LightName(lightData, actorNameById));
                 ApplyTransform(go.transform, lightData.transform);
                 // Unreal-лампы излучают вдоль локального +X, Unity — вдоль +Z.
                 // После смены базиса доворачиваем на +90° вокруг локального Y,
@@ -294,6 +322,21 @@ namespace UassetImporter
                 shared[over.index] = material;
             }
             renderer.sharedMaterials = shared;
+        }
+
+        // Имя объекта света: метка актёра-владельца (как в аутлайнере UE). Если
+        // актёр не найден — очищенный хвост UE-пути (id разделён '.'/':'/'/'),
+        // а не сырой путь целиком.
+        static string LightName(LevelLight data, Dictionary<string, string> actorNameById)
+        {
+            if (!string.IsNullOrEmpty(data.parentId) &&
+                actorNameById.TryGetValue(data.parentId, out var label) &&
+                !string.IsNullOrEmpty(label))
+                return label;
+
+            if (string.IsNullOrEmpty(data.id)) return "Light";
+            var tail = data.id.LastIndexOfAny(new[] { '.', ':', '/' });
+            return tail >= 0 ? data.id.Substring(tail + 1) : data.id;
         }
 
         static void ConfigureLight(Light light, LevelLight data)

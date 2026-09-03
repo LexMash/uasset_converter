@@ -947,6 +947,30 @@
       "v": "Skeletal avatar"
     },
     {
+      "k": "unity.import.avatars_from_existing",
+      "v": "animations without skeletal meshes: looking for avatars among already imported models"
+    },
+    {
+      "k": "unity.import.cat_animations",
+      "v": "Animations ({count})"
+    },
+    {
+      "k": "unity.import.cat_materials",
+      "v": "Materials ({count})"
+    },
+    {
+      "k": "unity.import.cat_meshes",
+      "v": "Static meshes ({count})"
+    },
+    {
+      "k": "unity.import.cat_skeletal",
+      "v": "Skeletal meshes ({count})"
+    },
+    {
+      "k": "unity.import.cat_textures",
+      "v": "Textures ({count})"
+    },
+    {
       "k": "unity.import.clips_done",
       "v": "clips configured: {count}"
     },
@@ -983,6 +1007,10 @@
       "v": "There is no unity_manifest.json in that folder.\nRun the “Export from Unreal” and “Post-process” steps in the converter first."
     },
     {
+      "k": "unity.import.nothing_selected",
+      "v": "nothing selected to import"
+    },
+    {
       "k": "unity.import.output_dir",
       "v": "Output folder"
     },
@@ -997,6 +1025,14 @@
     {
       "k": "unity.import.run",
       "v": "Import"
+    },
+    {
+      "k": "unity.import.select_all",
+      "v": "Select all"
+    },
+    {
+      "k": "unity.import.select_none",
+      "v": "Clear all"
     },
     {
       "k": "unity.import.skeletal_done",
@@ -1019,6 +1055,10 @@
       "v": "Models…"
     },
     {
+      "k": "unity.import.step_skeletal",
+      "v": "Skeletal meshes…"
+    },
+    {
       "k": "unity.import.step_textures",
       "v": "Configuring textures…"
     },
@@ -1029,6 +1069,10 @@
     {
       "k": "unity.import.textures_done",
       "v": "textures configured: {count}"
+    },
+    {
+      "k": "unity.import.what",
+      "v": "What to import"
     },
     {
       "k": "unity.import.window_title",

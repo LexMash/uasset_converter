@@ -468,6 +468,20 @@ STRINGS = {
     "unity.import.aborted": ("import aborted: {error}", "импорт прерван: {error}"),
     "unity.import.source_missing": ("source file is missing: {path}",
                                     "нет исходного файла: {path}"),
+    "unity.import.what": ("What to import", "Что импортировать"),
+    "unity.import.select_all": ("Select all", "Выбрать всё"),
+    "unity.import.select_none": ("Clear all", "Снять всё"),
+    "unity.import.cat_textures": ("Textures ({count})", "Текстуры ({count})"),
+    "unity.import.cat_materials": ("Materials ({count})", "Материалы ({count})"),
+    "unity.import.cat_meshes": ("Static meshes ({count})", "Статик-меши ({count})"),
+    "unity.import.cat_skeletal": ("Skeletal meshes ({count})", "Скелетные меши ({count})"),
+    "unity.import.cat_animations": ("Animations ({count})", "Анимации ({count})"),
+    "unity.import.step_skeletal": ("Skeletal meshes…", "Скелетные меши…"),
+    "unity.import.nothing_selected": ("nothing selected to import",
+                                      "не выбрано, что импортировать"),
+    "unity.import.avatars_from_existing": (
+        "animations without skeletal meshes: looking for avatars among already imported models",
+        "анимации без скелетных мешей: аватары ищу среди уже импортированных моделей"),
 
     # -- Unity: окно сборки сцен из уровней ----------------------------------
     "unity.level.window_title": ("Uasset Levels", "Уровни Uasset"),

@@ -156,6 +156,48 @@ def uv_and_panner():
     return g.connect("MP_BASE_COLOR", mixed).build()
 
 
+def geometry_builtins():
+    """BumpOffset, гео/камера-билтины и Round/Truncate — паритет SG-пути с HLSL."""
+    g = Graph("/Game/Test/M_Builtins")
+    uv0 = g.node("TextureCoordinate", coordinate_index=0, u_tiling=1.0, v_tiling=1.0)
+    height = g.node("TextureSampleParameter2D", {"UVs": None},
+                    parameter_name="Height", sampler_type="SAMPLERTYPE_GRAYSCALE",
+                    texture="/Game/Test/T_Height")
+    offset_uv = g.node("BumpOffset", {"Coordinate": uv0, "Height": (height, "R")},
+                       height_ratio=0.08)
+    albedo = g.node("TextureSampleParameter2D", {"UVs": offset_uv},
+                    parameter_name="Albedo", sampler_type="SAMPLERTYPE_COLOR",
+                    texture="/Game/Test/T_Albedo")
+    g.parameter("textures", "Height", "/Game/Test/T_Height")
+    g.parameter("textures", "Albedo", "/Game/Test/T_Albedo")
+
+    # металл = round(TwoSidedSign * 0.5): Round + faceSign
+    face = g.node("TwoSidedSign", {})
+    face_half = g.node("Multiply", {"A": face, "B": None}, const_b=0.5)
+    metal = g.node("Round", {"": face_half})
+
+    # шероховатость = trunc(ObjectRadius): Truncate + objectRadius
+    radius = g.node("ObjectRadius", {})
+    rough = g.node("Truncate", {"": radius})
+
+    # эмиссия сводит остальные билтины: camera/object position, scale, orientation, depth
+    cam = g.node("CameraPositionWS", {})
+    objp = g.node("ObjectPositionWS", {})
+    scale = g.node("ObjectScale", {})
+    orient = g.node("ObjectOrientation", {})
+    depth = g.node("PixelDepth", {})
+    e1 = g.node("Add", {"A": cam, "B": objp})
+    e2 = g.node("Add", {"A": e1, "B": scale})
+    e3 = g.node("Add", {"A": e2, "B": orient})
+    emis = g.node("Multiply", {"A": e3, "B": depth})
+
+    return (g.connect("MP_BASE_COLOR", albedo, "RGB")
+             .connect("MP_METALLIC", metal)
+             .connect("MP_ROUGHNESS", rough)
+             .connect("MP_EMISSIVE_COLOR", emis)
+             .build())
+
+
 def unsupported_node():
     """Незнакомая нода: первый вход пробрасывается, в отчёт падает TODO."""
     g = Graph("/Game/Test/M_Unsupported")
@@ -191,6 +233,7 @@ ALL = {
     "unlit_additive": unlit_additive,
     "engine_functions": engine_functions,
     "uv_and_panner": uv_and_panner,
+    "geometry_builtins": geometry_builtins,
     "unsupported_node": unsupported_node,
     "dropped_parameters": dropped_parameters,
 }

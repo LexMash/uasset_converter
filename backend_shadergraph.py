@@ -45,7 +45,7 @@ NATIVE_UNARY = {
     "asin": ("ArcsineNode", {}), "acos": ("ArccosineNode", {}),
     "atan": ("ArctangentNode", {}), "normalize": ("NormalizeNode", {}),
     "ddx": ("DDXNode", {}), "ddy": ("DDYNode", {}),
-    "length": ("LengthNode", {}),
+    "length": ("LengthNode", {}), "trunc": ("TruncateNode", {}),
     "exp": ("ExponentialNode", {"m_ExponentialBase": 0}),
     "exp2": ("ExponentialNode", {"m_ExponentialBase": 1}),
     "log2": ("LogNode", {"m_LogBase": 1}),
@@ -76,6 +76,10 @@ BUILTIN_NODE = {
     "viewDirWS": ("ViewDirectionNode", 0, VEC3),
     "vertexColor": ("VertexColorNode", 0, VEC4),
     "screenPosition": ("ScreenPositionNode", 0, VEC4),
+    # CameraNode: Position=слот 0. ObjectNode: Position=0, Scale=1.
+    "cameraPositionWS": ("CameraNode", 0, VEC3),
+    "objectPositionWS": ("ObjectNode", 0, VEC3),
+    "objectScale": ("ObjectNode", 1, VEC3),
 }
 
 
@@ -362,10 +366,29 @@ class Emitter:
         return obj, 2, VEC3
 
     def op_bump_offset(self, node):
-        # Полноценный parallax в SG требует своего узла с картой высот; здесь
-        # честно пробрасываем координату и оставляем пометку.
-        self._todo_record(node, "shader.todo.unsupported_passthrough", input="Coordinate")
-        return self.out[node.inputs[0]]
+        # Дешёвый parallax из HLSL-бэкенда: coord + (height - 0.5) * ratio * view.xy.
+        coord, height, view = node.inputs
+        ratio = node.args["ratio"]
+        sub = self.clone_node("SubtractNode")           # height - 0.5
+        self.connect(height, sub, 0)
+        half, _s, _d = self.const([0.5])
+        self.edge(half, 0, sub, 1)
+        mul_r = self.clone_node("MultiplyNode")         # * ratio
+        self.edge(sub, 2, mul_r, 0)
+        rconst, _s2, _d2 = self.const([ratio])
+        self.edge(rconst, 0, mul_r, 1)
+        split = self.clone_node("SplitNode")            # view.xy
+        self.connect(view, split, 0)
+        viewxy = self.clone_node("CombineNode")
+        self.edge(split, 1, viewxy, 0)                  # R -> R
+        self.edge(split, 2, viewxy, 1)                  # G -> G
+        mul_v = self.clone_node("MultiplyNode")         # scalar * view.xy
+        self.edge(mul_r, 2, mul_v, 0)
+        self.edge(viewxy, 6, mul_v, 1)                  # Combine RG out = слот 6
+        add = self.clone_node("AddNode")                # coord + offset
+        self.connect(coord, add, 0)
+        self.edge(mul_v, 2, add, 1)
+        return add, 2, VEC2
 
     def op_panner(self, node):
         speed = node.args["speed"]
@@ -426,12 +449,48 @@ class Emitter:
         if field == "time":
             time = self.clone_node("TimeNode")
             return time, 0, SCALAR
+        # Билтины без прямого узла-источника собираем вручную из захваченных нод.
+        if field == "faceSign":
+            return self._builtin_face_sign()
+        if field == "objectRadius":
+            # HLSL берёт length первого столбца матрицы модели = масштаб по X.
+            split = self.clone_node("SplitNode")
+            obj = self.clone_node("ObjectNode")
+            self.edge(obj, 1, split, 0)          # Scale -> Split
+            return split, 1, SCALAR              # .x
+        if field == "objectOrientation":
+            return self._builtin_object_orientation()
+        if field == "pixelDepth":
+            # Raw-режим ScreenPosition: .w = clip-space w ≈ input.positionCS.w.
+            sp = self.clone_node("ScreenPositionNode", m_ScreenSpaceType=1)
+            split = self.clone_node("SplitNode")
+            self.edge(sp, 0, split, 0)
+            return split, 4, SCALAR              # .w
         spec = BUILTIN_NODE.get(field)
         if spec is None:
             self._todo_record(node, "shader.todo.unsupported_no_inputs")
             return self.zero()
         sg_type, slot, dim = spec
         return self.clone_node(sg_type), slot, dim
+
+    def _builtin_face_sign(self):
+        """TwoSidedSign: IsFrontFace -> Branch(+1 / -1), как (facing>0?1:-1) в HLSL."""
+        face = self.clone_node("IsFrontFaceNode")
+        branch = self.clone_node("BranchNode")
+        self.edge(face, 0, branch, 0)            # Predicate (bool)
+        plus, _s, _d = self.const([1.0])
+        minus, _s2, _d2 = self.const([-1.0])
+        self.edge(plus, 0, branch, 1)            # True
+        self.edge(minus, 0, branch, 2)           # False
+        return branch, 3, SCALAR
+
+    def _builtin_object_orientation(self):
+        """Направление +Y объекта в мире: Transform((0,1,0), Object->World, normalize)."""
+        up = self.clone_node("Vector3Node", m_Value={"x": 0.0, "y": 1.0, "z": 0.0})
+        xf = self.clone_node("TransformNode", m_Conversion={"from": 0, "to": 2},
+                             m_ConversionType=1, m_Normalize=True)  # Direction, нормализованный
+        self.edge(up, 0, xf, 0)
+        return xf, 1, VEC3
 
     def op_call(self, node):
         fn = node.args["function"]
@@ -451,6 +510,15 @@ class Emitter:
             for ir_in, slot_id in zip(node.inputs, order):
                 self.connect(ir_in, obj, slot_id)
             return obj, 3, node.dim
+        if fn == "round":
+            # В палитре SG нет RoundNode: round(x) = floor(x + 0.5).
+            add = self.clone_node("AddNode")
+            self.connect(node.inputs[0], add, 0)
+            half, _s, _d = self.const([0.5])
+            self.edge(half, 0, add, 1)
+            floor = self.clone_node("FloorNode")
+            self.edge(add, 2, floor, 0)
+            return floor, 1, node.dim
         if fn in self.ir.helpers:
             return self.custom_function(fn, node.inputs, node.dim)
         # Незнакомая функция — проброс первого входа.

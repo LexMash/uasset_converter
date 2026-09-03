@@ -44,6 +44,7 @@ NEEDED_NODES = [
     "SwizzleNode", "SplitNode", "CombineNode", "AppendVectorNode",
     # нормали / гео
     "NormalReconstructZNode", "NormalUnpackNode", "ParallaxMappingNode", "RotateNode",
+    "TruncateNode", "ObjectNode", "IsFrontFaceNode", "TransformNode",
     # логика
     "BranchNode", "ComparisonNode",
     # утилиты

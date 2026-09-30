@@ -48,7 +48,6 @@ class ConverterApp:
         self.stop_flag = threading.Event()
 
         root.title(t("gui.title"))
-        root.geometry("980x800")
         root.minsize(820, 660)
 
         self.project_var = tk.StringVar(value=config["paths"]["ue_project"])
@@ -83,9 +82,20 @@ class ConverterApp:
         self.level_paths = {}
 
         self._build_ui()
+        self._fit_to_content()
         self.root.after(100, self._drain_messages)
 
     # -- построение интерфейса ----------------------------------------------
+
+    def _fit_to_content(self):
+        """Открываем окно ровно под содержимое, чтобы кнопки и лог не уезжали вниз."""
+        self.root.update_idletasks()
+        width = max(self.root.winfo_reqwidth(), 980)
+        height = self.root.winfo_reqheight()
+        # Не вылезаем за экран: на маленьком мониторе лучше прокрутка лога,
+        # чем окно за его краем.
+        max_h = self.root.winfo_screenheight() - 80
+        self.root.geometry("%dx%d" % (width, min(height, max_h)))
 
     def _build_ui(self):
         outer = ttk.Frame(self.root, padding=10)
